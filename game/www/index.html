@@ -1046,6 +1046,16 @@ var lastSent='', sendT=null, rkKind='week', rrT=null;
 var MUNI=null;
 function loadMuni(){ if(MUNI) return Promise.resolve(MUNI); return fetch('muni.json').then(function(r){return r.json();}).then(function(j){ MUNI=j; return j; }); }
 function muniName(code){ return (MUNI&&code&&MUNI[code])?MUNI[code][1]:null; }
+// 歩いている途中で市区町村の境をこえたら「◯◯に入った！」（約1km四方ごとに確かめ、結果は覚えておく）
+var walkMuni=null, muniCache={}, crossT=0;
+function checkCross(lat,lng){ if(mode!=='real'||!walking) return; var key=(Math.round(lat*100)/100)+','+(Math.round(lng*100)/100);
+  var done=function(code){ if(!code) return; if(walkMuni&&code!==walkMuni){ loadMuni().then(function(){ var nm=muniName(code); if(!nm) return;
+      var mine=Object.keys(S.pp||{}).length&&placeGroups().some(function(o){ return S.pn&&S.pn[o.key]&&S.pn[o.key].indexOf(nm)>=0; });
+      notify('📍 '+nm+'に入った！'+(mine?'':' はじめての街。囲めば新しい領地')); haptic('medium'); sfx('chest'); }); }
+    walkMuni=code; };
+  if(muniCache[key]) return done(muniCache[key]); var now=Date.now(); if(now-crossT<4000) return; crossT=now;
+  fetch('https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat='+(Math.round(lat*100)/100)+'&lon='+(Math.round(lng*100)/100)).then(function(r){ return r.json(); })
+    .then(function(j){ var cd=j&&j.results&&j.results.muniCd; if(!cd) return; var code=String(parseInt(cd,10)); muniCache[key]=code; done(code); }).catch(function(){}); }
 function detectMuni(lat,lng){
   var rl=Math.round(lat*100)/100, rg=Math.round(lng*100)/100, key=rl+','+rg;
   if(S.muniKey===key&&S.muni) return;
@@ -1665,7 +1675,7 @@ function addPoint(lat,lng,recenter){
   if(!claimed.has(k)){ claimed.add(k); var p=k.split(','); drawCell(+p[0],+p[1],0);
     if(mode==='real'){ today().cells++; addXP(1);
       if(isGold(+p[0],+p[1])){ S.gold=(S.gold||0)+1; today().gold++; var gx=goldXP(); if(isFever()) S.feverGold=(S.feverGold||0)+1; addXP(gx); notify('✨ 金マスを踏んだ！ +'+gx+'XP'+(gx>50?'（週末2倍）':'')); haptic('success'); sfx('gold'); drawGold(); } } }
-  if(mode==='real') nearChests(lat,lng);
+  if(mode==='real'){ nearChests(lat,lng); checkCross(lat,lng); }
   if(recenter&&follow) map.panTo(pt,{animate:true,duration:.5});
   if(mode==='real') autoClose();
   renderStats(); renderGuide(); updateFlag();
@@ -1899,7 +1909,7 @@ function bgGeo(){ var P=nativeP(); return P&&P.BackgroundGeolocation?P.Backgroun
 function startWalk(){
   var BG=bgGeo();
   if(!BG&&!navigator.geolocation){ notify('この端末は位置情報に対応していません'); return; }
-  fogOff(); walking=true; follow=true; $('#recenter').classList.add('on'); path=[]; pathLine.setLatLngs([]); segDist=0; lastFix=null; fixBuf=[]; fastN=0;
+  fogOff(); walkMuni=null; walking=true; follow=true; $('#recenter').classList.add('on'); path=[]; pathLine.setLatLngs([]); segDist=0; lastFix=null; fixBuf=[]; fastN=0;
   // 夜おそく（22時〜5時）に出陣したら、その夜に一度だけ安全のひと言
   var hh=new Date().getHours(); if(mode==='real'&&(hh>=22||hh<5)&&S.nightTip!==dayKey(new Date(Date.now()-5*3600e3))){ S.nightTip=dayKey(new Date(Date.now()-5*3600e3)); setTimeout(function(){ notify('🌙 夜道は明るい道で。車と足元に気をつけてね'); },1200); }
   sess={t0:Date.now(),cells:claimed.size,area:areaOf(claimed),xp:S.xp,lv:levelOf(S.xp),loops:S.loops||0,chests:S.chests||0,gold:S.gold||0};
