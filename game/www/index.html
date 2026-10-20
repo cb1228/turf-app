@@ -1052,7 +1052,7 @@ function checkCross(lat,lng){ if(mode!=='real'||!walking) return; var key=(Math.
   var done=function(code){ if(!code) return; if(walkMuni&&code!==walkMuni){ loadMuni().then(function(){ var nm=muniName(code); if(!nm) return;
       var mine=Object.keys(S.pp||{}).length&&placeGroups().some(function(o){ return S.pn&&S.pn[o.key]&&S.pn[o.key].indexOf(nm)>=0; });
       notify('📍 '+nm+'に入った！'+(mine?'':' はじめての街。囲めば新しい領地')); haptic('medium'); sfx('chest'); }); }
-    walkMuni=code; };
+    walkMuni=code; if(sess){ sess.munis=sess.munis||{}; sess.munis[code]=1; } };
   if(muniCache[key]) return done(muniCache[key]); var now=Date.now(); if(now-crossT<4000) return; crossT=now;
   fetch('https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat='+(Math.round(lat*100)/100)+'&lon='+(Math.round(lng*100)/100)).then(function(r){ return r.json(); })
     .then(function(j){ var cd=j&&j.results&&j.results.muniCd; if(!cd) return; var code=String(parseInt(cd,10)); muniCache[key]=code; done(code); }).catch(function(){}); }
@@ -1869,7 +1869,8 @@ function showResult(){
   var s0=sess; sess=null;
   var cells=claimed.size-s0.cells, area=areaOf(claimed)-s0.area, xp=S.xp-s0.xp, L=levelOf(S.xp), a=need(L), b=need(L+1);
   var min=Math.max(1,Math.round((Date.now()-s0.t0)/60000));
-  $('#rTime').textContent=(min>=60?Math.floor(min/60)+'時間'+(min%60)+'分':min+'分')+' ・ '+fmtDist(segDist);
+  var nm2=Object.keys(s0.munis||{}).length;
+  $('#rTime').textContent=(min>=60?Math.floor(min/60)+'時間'+(min%60)+'分':min+'分')+' ・ '+fmtDist(segDist)+(nm2>=2?' ・ '+nm2+'つの街':'');
   countUp($('#rCells'),cells,'+',900);
   var noLoop=(S.loops||0)===s0.loops;
   if(area>0&&!(noLoop&&lastMiss)) $('#rArea').textContent=fmtArea(area)+' ・ '+headline(area);
