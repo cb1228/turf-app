@@ -1152,7 +1152,9 @@ function drawFriends(d){
     b.dataset.armed=1; b.textContent='本当に？'; }; });
 }
 function inviteFriend(){
-  if(!S.fcode){ notify('オンラインのときに試してね'); return; }
+  // 招待コードをまだ持っていなければ、その場でもらってから共有する（友だちタブを開いていなくても誘える）
+  if(!S.fcode){ if(navigator.onLine===false){ notify('電波のある場所で試してね'); return; } notify('招待リンクを作っています…');
+    regNow().then(function(){ return fpost('/api/friend/code'); }).then(function(r){ if(r&&r.code){ S.fcode=r.code; save(); inviteFriend(); } else notify('招待リンクを作れませんでした。もう一度試してね'); }).catch(function(){ notify('つながらなかった。電波のいい場所でもう一度'); }); return; }
   var url='https://auto-revenue-agent.himosho22.workers.dev/turf?f='+S.fcode, text='TURFで、今週の陣取り勝負しよう！\nこのリンクから始めると、2人とも +'+FR_XP+'XP 🎁\n招待コード: '+S.fcode+'\n'+url, P=nativeP();
   if(P&&P.Share){ P.Share.share({title:'TURF',text:text}).catch(function(){}); return; }
   if(navigator.share){ navigator.share({text:text}).catch(function(){}); return; }
