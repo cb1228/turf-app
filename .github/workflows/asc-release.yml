@@ -18,7 +18,7 @@ on:
         required: false
         default: ""
       dry_run:
-        description: "true なら確認だけ（提出しない）"
+        description: "true なら確認だけ / prepare なら整えるだけ（提出しない）"
         required: true
         default: "true"
 permissions:
@@ -93,6 +93,8 @@ jobs:
           notes = open("game/store/review_notes.txt", encoding="utf-8").read().strip()
           if det.status_code == 200 and det.json().get("data"):
               d = det.json()["data"]; call("PATCH", "/appStoreReviewDetails/" + d["id"], {"data": {"type": "appStoreReviewDetails", "id": d["id"], "attributes": {"notes": notes}}})
+          # prepare: ここまで（ビルド・説明文・年齢区分・審査メモ）を整えて止める。はじめてのApp内課金はWebのバージョン画面で付けて提出する
+          if os.environ["DRY"] == "prepare": print("PREPARED: 提出はしていない"); sys.exit(0)
           # 5) 提出
           sub = [s for s in call("GET", "/reviewSubmissions", **{"filter[app]": app["id"], "limit": 5}).json()["data"] if s["attributes"]["state"] == "READY_FOR_REVIEW"]
           if sub: sid = sub[0]["id"]
