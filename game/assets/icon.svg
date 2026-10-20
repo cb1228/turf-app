@@ -1,0 +1,61 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#221a3a"/>
+      <stop offset="0.55" stop-color="#141018"/>
+      <stop offset="1" stop-color="#0b0d12"/>
+    </linearGradient>
+    <radialGradient id="limeGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#c8ff4a" stop-opacity="0.9"/>
+      <stop offset="0.6" stop-color="#8dff1f" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#8dff1f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c6ff5a"/>
+      <stop offset="1" stop-color="#4fe06a"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5aa0"/>
+      <stop offset="1" stop-color="#ff2d78"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="pinkGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <!-- squircle background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" fill="url(#bg)"/>
+
+  <!-- faint map grid -->
+  <g stroke="#ffffff" stroke-opacity="0.06" stroke-width="3">
+    <path d="M150 0 V1024 M330 0 V1024 M520 0 V1024 M700 0 V1024 M880 0 V1024"/>
+    <path d="M0 170 H1024 M0 360 H1024 M0 560 H1024 M0 750 H1024 M0 900 H1024"/>
+  </g>
+  <!-- diagonal 'road' accents -->
+  <g stroke="#ffffff" stroke-opacity="0.07" stroke-width="10" stroke-linecap="round">
+    <path d="M120 660 L470 430 L900 640"/>
+    <path d="M180 300 L560 520"/>
+  </g>
+
+  <!-- claimed territory glow + patch -->
+  <ellipse cx="520" cy="560" rx="330" ry="300" fill="url(#limeGlow)" filter="url(#soft)"/>
+  <path d="M300 470 Q300 400 380 392 L640 360 Q740 352 748 452 L760 640 Q766 726 676 732 L420 748 Q318 754 312 656 Z"
+        fill="url(#lime)" fill-opacity="0.82" stroke="#eaffb0" stroke-opacity="0.5" stroke-width="6"/>
+
+  <!-- pink route loop -->
+  <path d="M300 470 Q300 400 380 392 L640 360 Q740 352 748 452 L760 640 Q766 726 676 732 L420 748 Q318 754 312 656 Z"
+        fill="none" stroke="url(#pink)" stroke-width="26" stroke-linejoin="round" filter="url(#pinkGlow)" opacity="0.9"/>
+  <path d="M300 470 Q300 400 380 392 L640 360 Q740 352 748 452 L760 640 Q766 726 676 732 L420 748 Q318 754 312 656 Z"
+        fill="none" stroke="url(#pink)" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- flag pin planted at center -->
+  <g transform="translate(508 300)">
+    <ellipse cx="0" cy="300" rx="70" ry="22" fill="#000000" opacity="0.28"/>
+    <rect x="-11" y="0" width="22" height="300" rx="11" fill="#ffffff"/>
+    <path d="M11 6 L210 70 L11 150 Z" fill="url(#pink)" stroke="#ffffff" stroke-width="8" stroke-linejoin="round"/>
+    <circle cx="0" cy="-4" r="20" fill="#ffffff"/>
+  </g>
+</svg>

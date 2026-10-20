@@ -1,0 +1,106 @@
+name: iOS build (Capacitor)
+
+# じんとり散歩の iOS アプリを、クラウドの macOS で作る（Windows しか無くても Mac 不要）。
+# - build-unsigned: push のたびに「Xcode でコンパイルが通るか」を確認（署名なし・誰でも回せる）
+# - testflight: 手動実行（Actions → iOS build → Run workflow）で、署名して TestFlight へ送る。
+#   App Store Connect の API キーを GitHub の Secrets に入れたときだけ動く（手順は game/store/TESTFLIGHT.md）
+
+on:
+  push:
+    paths:
+      - "game/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+    inputs:
+      testflight:
+        description: "署名して TestFlight に送る"
+        type: boolean
+        default: true
+
+jobs:
+  build-unsigned:
+    name: Unsigned simulator build（コンパイル検証）
+    runs-on: macos-26 # App Store への提出は Xcode 26（iOS 26 SDK）以降が必須
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the latest Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: xcodebuild -version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Prepare iOS project
+        run: bash game/scripts/prepare-ios.sh
+      - name: Build for simulator (no code signing)
+        working-directory: game/ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | xcpretty || \
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+  testflight:
+    name: Sign & upload to TestFlight
+    if: github.event_name == 'workflow_dispatch' && inputs.testflight
+    runs-on: macos-26 # App Store への提出は Xcode 26（iOS 26 SDK）以降が必須
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Check secrets
+        run: |
+          missing=""
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID; do [ -n "${!v}" ] || missing="$missing $v"; done
+          if [ -n "$missing" ]; then echo "::error::GitHub の Secrets が足りません:$missing（手順は game/store/TESTFLIGHT.md）"; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Use the latest Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: xcodebuild -version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Prepare iOS project
+        run: bash game/scripts/prepare-ios.sh
+      - name: Write App Store Connect API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
+      # 組み立て（archive）では署名しない。送り出し（export）の時に、配布用の証明書と App Store 用プロファイルで署名する
+      # （組み立て時の自動署名は「開発用」になり、テスト端末の登録が無いと失敗するため）
+      - name: Archive (unsigned)
+        working-directory: game/ios/App
+        run: |
+          VERSION=$(node -p "require('../../package.json').version")
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            archive
+      - name: Export & upload to App Store Connect (TestFlight)
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "アップロード完了。App Store Connect の TestFlight に10〜30分で表示されます（処理待ち）。"
+      - name: Remove API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

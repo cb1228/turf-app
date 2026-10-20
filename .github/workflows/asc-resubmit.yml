@@ -1,0 +1,87 @@
+# 審査に出し直す（リジェクトされた版の番号とビルドを差し替えて再提出）。鍵は GitHub Secrets の中だけで使う
+name: App Store resubmit
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "新しいバージョン番号"
+        required: true
+        default: "1.0.1"
+      build:
+        description: "使うビルド番号"
+        required: true
+        default: "84"
+      dry_run:
+        description: "true なら確認だけ（提出しない）"
+        required: true
+        default: "true"
+permissions:
+  contents: read
+jobs:
+  resubmit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q "pyjwt[crypto]" requests
+      - name: Resubmit
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          VERSION: ${{ inputs.version }}
+          BUILD: ${{ inputs.build }}
+          DRY: ${{ inputs.dry_run }}
+        shell: python
+        run: |
+          import os, time, json, jwt, requests, sys
+          now = int(time.time())
+          tok = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"},
+                           os.environ["ASC_KEY_P8"], algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          H = {"Authorization": "Bearer " + tok, "Content-Type": "application/json"}
+          B = "https://api.appstoreconnect.apple.com/v1"
+          dry = os.environ["DRY"] == "true"
+          def call(m, path, body=None, **p):
+              r = requests.request(m, B + path, params=p, headers=H, data=json.dumps(body) if body else None, timeout=60)
+              print("%s %s -> %s" % (m, path, r.status_code))
+              if r.status_code >= 400: print(r.text[:3000])
+              return r
+          app = call("GET", "/apps", **{"filter[bundleId]": "com.himori.jintori"}).json()["data"][0]
+          ver = [v for v in call("GET", "/apps/%s/appStoreVersions" % app["id"], limit=5).json()["data"]][0]
+          print("VERSION", ver["attributes"]["versionString"], ver["attributes"]["appStoreState"])
+          bl = call("GET", "/builds", **{"filter[app]": app["id"], "filter[version]": os.environ["BUILD"]}).json()["data"]
+          if not bl: sys.exit("build not found")
+          b = bl[0]; print("BUILD", b["attributes"]["version"], b["attributes"]["processingState"], "encryption:", b["attributes"].get("usesNonExemptEncryption"))
+          sub = call("GET", "/reviewSubmissions", **{"filter[app]": app["id"], "limit": 3}).json()["data"]
+          for s in sub: print("SUBMISSION", s["id"], s["attributes"]["state"])
+          if dry: print("DRY RUN: 提出しない"); sys.exit(0)
+
+          # 1) 暗号化の申告（未設定なら「使っていない」）
+          if b["attributes"].get("usesNonExemptEncryption") is None:
+              call("PATCH", "/builds/" + b["id"], {"data": {"type": "builds", "id": b["id"], "attributes": {"usesNonExemptEncryption": False}}})
+          # 2) バージョン番号
+          if ver["attributes"]["versionString"] != os.environ["VERSION"]:
+              r = call("PATCH", "/appStoreVersions/" + ver["id"], {"data": {"type": "appStoreVersions", "id": ver["id"], "attributes": {"versionString": os.environ["VERSION"]}}})
+              if r.status_code >= 400: sys.exit("version update failed")
+          # 3) ビルドの差し替え
+          r = call("PATCH", "/appStoreVersions/%s/relationships/build" % ver["id"], {"data": {"type": "builds", "id": b["id"]}})
+          if r.status_code >= 400: sys.exit("build attach failed")
+          # 4) 審査メモ（リポジトリの game/store/review_notes.txt）
+          det = call("GET", "/appStoreVersions/%s/appStoreReviewDetail" % ver["id"]).json()["data"]
+          notes = open("game/store/review_notes.txt", encoding="utf-8").read().strip()
+          call("PATCH", "/appStoreReviewDetails/" + det["id"], {"data": {"type": "appStoreReviewDetails", "id": det["id"], "attributes": {"notes": notes}}})
+          # 5) 再提出: 未解決の提出があればそれを提出し直す。無ければ新しく作る
+          open_sub = [s for s in sub if s["attributes"]["state"] in ("UNRESOLVED_ISSUES", "READY_FOR_REVIEW")]
+          if open_sub:
+              sid = open_sub[0]["id"]
+              for it in call("GET", "/reviewSubmissions/%s/items" % sid).json().get("data", []):
+                  if it["attributes"].get("state") == "REJECTED":
+                      call("PATCH", "/reviewSubmissionItems/" + it["id"], {"data": {"type": "reviewSubmissionItems", "id": it["id"], "attributes": {"resolved": True}}})
+          else:
+              sid = call("POST", "/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": "IOS"},
+                         "relationships": {"app": {"data": {"type": "apps", "id": app["id"]}}}}}).json()["data"]["id"]
+              call("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+                   "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sid}},
+                   "appStoreVersion": {"data": {"type": "appStoreVersions", "id": ver["id"]}}}}})
+          r = call("PATCH", "/reviewSubmissions/" + sid, {"data": {"type": "reviewSubmissions", "id": sid, "attributes": {"submitted": True}}})
+          if r.status_code >= 400: sys.exit("submit failed")
+          print("SUBMITTED", json.dumps(r.json()["data"]["attributes"]))

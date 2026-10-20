@@ -1,0 +1,32 @@
+# 審査待ちの提出を取り下げる（オーナーの指示があるときだけ手動で実行）。鍵は GitHub Secrets の中だけで使う
+name: App Store cancel review
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip install -q "pyjwt[crypto]" requests
+      - name: Cancel waiting submission
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        shell: python
+        run: |
+          import os, time, json, jwt, requests
+          now = int(time.time())
+          tok = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
+                           os.environ["ASC_KEY_P8"], algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          H = {"Authorization": "Bearer " + tok, "Content-Type": "application/json"}
+          B = "https://api.appstoreconnect.apple.com/v1"
+          app = requests.get(B + "/apps", params={"filter[bundleId]": "com.himori.jintori"}, headers=H, timeout=30).json()["data"][0]
+          subs = requests.get(B + "/reviewSubmissions", params={"filter[app]": app["id"], "limit": 5}, headers=H, timeout=30).json().get("data", [])
+          for s in subs:
+              st = s["attributes"]["state"]; print("SUBMISSION", s["id"], st)
+              if st in ("WAITING_FOR_REVIEW", "READY_FOR_REVIEW"):
+                  r = requests.patch(B + "/reviewSubmissions/" + s["id"], headers=H, timeout=30,
+                                     data=json.dumps({"data": {"type": "reviewSubmissions", "id": s["id"], "attributes": {"canceled": True}}}))
+                  print("CANCEL", r.status_code, r.text[:300])

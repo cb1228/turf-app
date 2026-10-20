@@ -1,0 +1,18 @@
+What's new in 1.0.4:
+- In-app purchase "Proパック" (com.himori.jintori.pro, non-consumable, ¥850) is submitted together with this version. Open Settings (top right) > "Proパック" to see the price and buy it. "購入を復元する" (Restore Purchases) is on the same screen. It adds 3 cosmetic map skins (Rainbow/Aurora/Yozakura), a gold frame for the share card and a once-a-day mission swap. It does not affect rankings or gameplay balance.
+- Default player icons are now 5 original illustrations assigned at random (players can still upload their own icon, which is checked before it is shown to others; report/block remain in the ranking).
+- Fewer overlapping hints on the first walk.
+
+TURF is a location-based territory game played by walking outdoors.
+Your walking path is recorded with GPS; when the path loops back to itself, the enclosed area becomes your territory.
+
+How to review without walking:
+- Screens you can check without moving: Ranking (bottom right), Missions (bottom left), Profile (tap the level badge at top left), Settings (top right).
+- To try names/icons/report/block: open Ranking > "名前・アイコン" (bottom bar), or tap another player in the ranking.
+- In-app demo (no walking needed): Settings (top right) > "遊び方デモを見る" plays the full loop automatically. It does not save anything; tap "自分で遊ぶ" to return.
+
+Background location: used only while the user has started a walk ("出陣する") so the path keeps recording with the screen off in a pocket. It stops when the user taps "一時停止" (Pause).
+
+No account is required. There is no chat, and precise location/path is never sent to our server.
+Privacy policy: https://auto-revenue-agent.himosho22.workers.dev/turf-privacy
+Contact: jintori.support@gmail.com

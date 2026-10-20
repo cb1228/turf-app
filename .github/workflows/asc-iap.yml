@@ -1,0 +1,95 @@
+# App内課金「Proパック」を App Store Connect に登録する（何度実行しても同じものを作り直さない）。鍵は GitHub Secrets の中だけで使う
+name: App Store IAP
+on:
+  workflow_dispatch:
+    inputs:
+      price_jpy:
+        description: "日本での価格（円。一番近い価格帯を選ぶ）"
+        required: true
+        default: "850"
+permissions:
+  contents: read
+jobs:
+  iap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q "pyjwt[crypto]" requests
+      - name: Create IAP
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          PRICE: ${{ inputs.price_jpy }}
+        shell: python
+        run: |
+          import os, time, json, hashlib, jwt, requests, sys
+          now = int(time.time())
+          tok = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"},
+                           os.environ["ASC_KEY_P8"], algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          H = {"Authorization": "Bearer " + tok, "Content-Type": "application/json"}
+          R = "https://api.appstoreconnect.apple.com"
+          def call(m, path, body=None, **p):
+              r = requests.request(m, R + path, params=p, headers=H, data=json.dumps(body) if body else None, timeout=60)
+              print("%s %s -> %s" % (m, path, r.status_code))
+              if r.status_code >= 400: print(r.text[:2000])
+              return r
+          PID = "com.himori.jintori.pro"
+          app = call("GET", "/v1/apps", **{"filter[bundleId]": "com.himori.jintori"}).json()["data"][0]
+          ex = call("GET", "/v1/apps/%s/inAppPurchasesV2" % app["id"], **{"filter[productId]": PID}).json().get("data", [])
+          if ex:
+              iap = ex[0]; print("EXISTS", iap["id"], iap["attributes"].get("state"))
+          else:
+              r = call("POST", "/v2/inAppPurchases", {"data": {"type": "inAppPurchases", "attributes": {
+                  "name": "Proパック", "productId": PID, "inAppPurchaseType": "NON_CONSUMABLE", "familySharable": False,
+                  "reviewNote": "Cosmetic skins (Rainbow/Aurora/Yozakura), a gold frame for the share card, and a once-a-day mission swap. It does not affect rankings. Open Settings (top right) > Proパック. Restore Purchases is on the same screen."},
+                  "relationships": {"app": {"data": {"type": "apps", "id": app["id"]}}}}})
+              if r.status_code >= 400: sys.exit("create failed")
+              iap = r.json()["data"]; print("CREATED", iap["id"])
+          iid = iap["id"]
+          # 表示名と説明（日本語）
+          locs = call("GET", "/v2/inAppPurchases/%s/inAppPurchaseLocalizations" % iid).json().get("data", [])
+          if not any(l["attributes"]["locale"] == "ja" for l in locs):
+              call("POST", "/v1/inAppPurchaseLocalizations", {"data": {"type": "inAppPurchaseLocalizations",
+                   "attributes": {"locale": "ja", "name": "Proパック", "description": "限定スキン3種・金縁カード・ミッション入れ替え"},
+                   "relationships": {"inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}}}}})
+          # 販売する国（日本のみ）
+          av = call("GET", "/v2/inAppPurchases/%s/inAppPurchaseAvailability" % iid)
+          if av.status_code != 200 or not av.json().get("data"):
+              call("POST", "/v1/inAppPurchaseAvailabilities", {"data": {"type": "inAppPurchaseAvailabilities", "attributes": {"availableInNewTerritories": False},
+                   "relationships": {"inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
+                                     "availableTerritories": {"data": [{"type": "territories", "id": "JPN"}]}}}})
+          # 価格（日本円で一番近い価格帯）
+          want = float(os.environ["PRICE"]); best = None; url = "/v2/inAppPurchases/%s/pricePoints" % iid; params = {"filter[territory]": "JPN", "limit": 200}
+          while url:
+              j = call("GET", url, **params).json(); params = {}
+              for pp in j.get("data", []):
+                  c = float(pp["attributes"]["customerPrice"])
+                  if best is None or abs(c - want) < abs(float(best["attributes"]["customerPrice"]) - want): best = pp
+              nxt = j.get("links", {}).get("next"); url = nxt.replace(R, "") if nxt else None
+          print("PRICE", best["attributes"]["customerPrice"], "proceeds", best["attributes"].get("proceeds"))
+          # 価格は毎回設定し直す（同じ価格なら変化なし）
+          if True:
+              call("POST", "/v1/inAppPurchasePriceSchedules", {"data": {"type": "inAppPurchasePriceSchedules", "relationships": {
+                   "inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
+                   "baseTerritory": {"data": {"type": "territories", "id": "JPN"}},
+                   "manualPrices": {"data": [{"type": "inAppPurchasePrices", "id": "${p1}"}]}}},
+                   "included": [{"type": "inAppPurchasePrices", "id": "${p1}", "attributes": {"startDate": None},
+                                 "relationships": {"inAppPurchasePricePoint": {"data": {"type": "inAppPurchasePricePoints", "id": best["id"]}}}}]})
+          # 審査用スクリーンショット
+          shot = call("GET", "/v2/inAppPurchases/%s/appStoreReviewScreenshot" % iid)
+          if shot.status_code != 200 or not shot.json().get("data"):
+              data = open("game/store/screenshots/07_pro.jpg", "rb").read()
+              r = call("POST", "/v1/inAppPurchaseAppStoreReviewScreenshots", {"data": {"type": "inAppPurchaseAppStoreReviewScreenshots",
+                   "attributes": {"fileName": "pro.jpg", "fileSize": len(data)},
+                   "relationships": {"inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}}}}})
+              if r.status_code < 400:
+                  s = r.json()["data"]
+                  for op in s["attributes"]["uploadOperations"]:
+                      hh = {h["name"]: h["value"] for h in op.get("requestHeaders", [])}
+                      part = data[op["offset"]:op["offset"] + op["length"]]
+                      u = requests.request(op["method"], op["url"], headers=hh, data=part, timeout=60); print("UPLOAD", u.status_code)
+                  call("PATCH", "/v1/inAppPurchaseAppStoreReviewScreenshots/" + s["id"], {"data": {"type": "inAppPurchaseAppStoreReviewScreenshots", "id": s["id"],
+                       "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}})
+          st = call("GET", "/v2/inAppPurchases/" + iid).json()["data"]["attributes"]
+          print("STATE", st.get("state"), st.get("productId"))

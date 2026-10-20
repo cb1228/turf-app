@@ -1,0 +1,18 @@
+{
+  "appId": "com.himori.jintori",
+  "appName": "TURF",
+  "webDir": "www",
+  "backgroundColor": "#0c0f14",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0c0f14"
+  },
+  "plugins": {
+    "Geolocation": {},
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "backgroundColor": "#0c0f14",
+      "showSpinner": false
+    }
+  }
+}

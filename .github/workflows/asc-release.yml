@@ -1,0 +1,121 @@
+# 新しいバージョンを作って審査に出す（説明文・新機能の文・ビルドを入れて提出）。鍵は GitHub Secrets の中だけで使う
+name: App Store release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "新しいバージョン番号"
+        required: true
+      build:
+        description: "使うビルド番号"
+        required: true
+      ugc:
+        description: "年齢区分の「ユーザー生成コンテンツ」（true/false。空なら変えない）"
+        required: false
+        default: "true"
+      iap:
+        description: "一緒に審査に出すApp内課金の製品ID（空なら出さない）"
+        required: false
+        default: ""
+      dry_run:
+        description: "true なら確認だけ（提出しない）"
+        required: true
+        default: "true"
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q "pyjwt[crypto]" requests
+      - name: Release
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          VERSION: ${{ inputs.version }}
+          BUILD: ${{ inputs.build }}
+          DRY: ${{ inputs.dry_run }}
+          UGC: ${{ inputs.ugc }}
+          IAP: ${{ inputs.iap }}
+        shell: python
+        run: |
+          import os, time, json, jwt, requests, sys
+          now = int(time.time())
+          tok = jwt.encode({"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 1100, "aud": "appstoreconnect-v1"},
+                           os.environ["ASC_KEY_P8"], algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+          H = {"Authorization": "Bearer " + tok, "Content-Type": "application/json"}
+          B = "https://api.appstoreconnect.apple.com/v1"
+          dry = os.environ["DRY"] == "true"; V = os.environ["VERSION"]
+          def call(m, path, body=None, **p):
+              r = requests.request(m, B + path, params=p, headers=H, data=json.dumps(body) if body else None, timeout=60)
+              print("%s %s -> %s" % (m, path, r.status_code))
+              if r.status_code >= 400: print(r.text[:3000])
+              return r
+          app = call("GET", "/apps", **{"filter[bundleId]": "com.himori.jintori"}).json()["data"][0]
+          vers = call("GET", "/apps/%s/appStoreVersions" % app["id"], limit=10).json()["data"]
+          for v in vers: print("VERSION", v["attributes"]["versionString"], v["attributes"]["appStoreState"])
+          bl = call("GET", "/builds", **{"filter[app]": app["id"], "filter[version]": os.environ["BUILD"]}).json()["data"]
+          if not bl: sys.exit("build not found")
+          b = bl[0]; print("BUILD", b["attributes"]["version"], b["attributes"]["processingState"])
+          if b["attributes"]["processingState"] != "VALID": sys.exit("build not ready")
+          desc = open("game/store/description_ja.txt", encoding="utf-8").read().strip()
+          news = open("game/store/whatsnew_ja.txt", encoding="utf-8").read().strip()
+          print("DESC", len(desc), "chars / literal backslash-n:", "\\n" in desc)
+          if dry: print("DRY RUN: 提出しない"); sys.exit(0)
+
+          # 1) 新しいバージョン（無ければ作る）
+          ver = next((v for v in vers if v["attributes"]["versionString"] == V), None)
+          if not ver:
+              r = call("POST", "/appStoreVersions", {"data": {"type": "appStoreVersions", "attributes": {"platform": "IOS", "versionString": V, "releaseType": "AFTER_APPROVAL"},
+                       "relationships": {"app": {"data": {"type": "apps", "id": app["id"]}}}}})
+              if r.status_code >= 400: sys.exit("version create failed")
+              ver = r.json()["data"]
+          # 2) 説明文・新機能の文
+          for loc in call("GET", "/appStoreVersions/%s/appStoreVersionLocalizations" % ver["id"]).json()["data"]:
+              print("LOCALE", loc["attributes"]["locale"])
+              call("PATCH", "/appStoreVersionLocalizations/" + loc["id"], {"data": {"type": "appStoreVersionLocalizations", "id": loc["id"],
+                   "attributes": {"description": desc, "whatsNew": news}}})
+          # 2.5) 年齢区分（名前・アイコン画像を自分で入れられるので「ユーザー生成コンテンツ」= はい）
+          if os.environ.get("UGC") in ("true", "false"):
+              for inf in call("GET", "/apps/%s/appInfos" % app["id"]).json().get("data", []):
+                  if inf["attributes"].get("appStoreState") == "READY_FOR_SALE": continue
+                  ar = call("GET", "/appInfos/%s/ageRatingDeclaration" % inf["id"]).json().get("data")
+                  if ar: call("PATCH", "/ageRatingDeclarations/" + ar["id"], {"data": {"type": "ageRatingDeclarations", "id": ar["id"], "attributes": {"userGeneratedContent": os.environ["UGC"] == "true"}}})
+          # 3) ビルド
+          if b["attributes"].get("usesNonExemptEncryption") is None:
+              call("PATCH", "/builds/" + b["id"], {"data": {"type": "builds", "id": b["id"], "attributes": {"usesNonExemptEncryption": False}}})
+          r = call("PATCH", "/appStoreVersions/%s/relationships/build" % ver["id"], {"data": {"type": "builds", "id": b["id"]}})
+          if r.status_code >= 400: sys.exit("build attach failed")
+          # 4) 審査メモ
+          det = call("GET", "/appStoreVersions/%s/appStoreReviewDetail" % ver["id"])
+          notes = open("game/store/review_notes.txt", encoding="utf-8").read().strip()
+          if det.status_code == 200 and det.json().get("data"):
+              d = det.json()["data"]; call("PATCH", "/appStoreReviewDetails/" + d["id"], {"data": {"type": "appStoreReviewDetails", "id": d["id"], "attributes": {"notes": notes}}})
+          # 5) 提出
+          sub = [s for s in call("GET", "/reviewSubmissions", **{"filter[app]": app["id"], "limit": 5}).json()["data"] if s["attributes"]["state"] == "READY_FOR_REVIEW"]
+          if sub: sid = sub[0]["id"]
+          else:
+              r = call("POST", "/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": "IOS"},
+                       "relationships": {"app": {"data": {"type": "apps", "id": app["id"]}}}}})
+              if r.status_code >= 400: sys.exit("submission create failed")
+              sid = r.json()["data"]["id"]
+          have = [it for it in call("GET", "/reviewSubmissions/%s/items" % sid, include="appStoreVersion").json().get("data", [])]
+          if not have:
+            for tryn in range(3):
+              ri = call("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+               "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sid}},
+               "appStoreVersion": {"data": {"type": "appStoreVersions", "id": ver["id"]}}}}})
+              if ri.status_code < 400: break
+              time.sleep(5)
+          # 5.5) App内課金も一緒に審査へ（はじめてのApp内課金はアプリの新バージョンと一緒に出す決まり）
+          if os.environ.get("IAP"):
+              lst = call("GET", "/apps/%s/inAppPurchasesV2" % app["id"], **{"filter[productId]": os.environ["IAP"]}).json().get("data", [])
+              if lst:
+                  print("IAP", lst[0]["id"], lst[0]["attributes"].get("state"))
+                  if lst[0]["attributes"].get("state") == "READY_TO_SUBMIT":
+                      call("POST", "/inAppPurchaseSubmissions", {"data": {"type": "inAppPurchaseSubmissions", "relationships": {"inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": lst[0]["id"]}}}}})
+          r = call("PATCH", "/reviewSubmissions/" + sid, {"data": {"type": "reviewSubmissions", "id": sid, "attributes": {"submitted": True}}})
+          if r.status_code >= 400: sys.exit("submit failed")
+          print("SUBMITTED", json.dumps(r.json()["data"]["attributes"]))
