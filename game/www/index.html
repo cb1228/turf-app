@@ -1479,9 +1479,9 @@ var cellCanvas=new CellCanvas({pane:'cells',maxZoom:19,updateWhenZooming:false,k
 function repaintCells(){ var ts=cellCanvas._tiles; for(var k in ts){ if(ts[k].el) paintTile(ts[k].el,ts[k].coords); } }
 var cellsLayer=L.layerGroup().addTo(map);
 // ---- 領地マップ: これまで取った領地が全部入る範囲まで引いて見せる（引きでもマスは最小4pxで塗るので場所が分かる） ----
-var fogLayer=null;
+var fogLayer=null, fogPrev=null;
 function fogOn(){
-  if(fogLayer) return; fogLayer=true;
+  if(fogLayer) return; fogLayer=true; fogPrev={c:map.getCenter(),z:map.getZoom(),f:follow}; // 閉じたら元の場所に戻す
   document.body.classList.add('fogon'); $('#btnFog').classList.add('on'); $('#btnFog').setAttribute('aria-pressed','true'); $('#fogBar').hidden=false;
   var n=claimed.size, gs=placeGroups(), pf=0; try{ pf=Object.keys(prefStats(gs)).length; }catch(e){}
   $('#fogTxt').innerHTML= n ? 'ぜんぶで <em>'+fmtArea(areaOf(claimed))+'</em>・<em>'+gs.length+'</em>か所'+(pf>1?'・<em>'+pf+'</em>都道府県':'')+'。指で広げると、塗った所がくわしく見える' : 'まだ領地がないよ。出陣して、ぐるっと囲んでみよう';
@@ -1489,7 +1489,7 @@ function fogOn(){
     follow=false; $('#recenter').classList.remove('on'); map.fitBounds([[b[0][0]-CELL*4,b[0][1]-CELL*4],[b[1][0]+CELL*4,b[1][1]+CELL*4]],{padding:[70,70],maxZoom:16}); }
   haptic('light');
 }
-function fogOff(){ if(!fogLayer) return; fogLayer=null; document.body.classList.remove('fogon'); $('#btnFog').classList.remove('on'); $('#btnFog').setAttribute('aria-pressed','false'); $('#fogBar').hidden=true; }
+function fogOff(back){ if(!fogLayer) return; if(back&&fogPrev){ map.setView(fogPrev.c,fogPrev.z,{animate:true}); if(fogPrev.f){ follow=true; $('#recenter').classList.add('on'); } } fogPrev=null; fogLayer=null; document.body.classList.remove('fogon'); $('#btnFog').classList.remove('on'); $('#btnFog').setAttribute('aria-pressed','false'); $('#fogBar').hidden=true; }
 function settleCells(){ clearTimeout(settleT); settleT=null; animating.clear(); cellsLayer.clearLayers(); repaintCells(); }
 var chestLayer=L.layerGroup().addTo(map), chestMk={};
 function drawGold(){
@@ -2489,8 +2489,8 @@ Array.prototype.forEach.call(document.querySelectorAll('#rkSeg button'),function
 $('#rankCard').addEventListener('click',function(){ showSheet('#shProfile'); });
 $('#terr').addEventListener('click',function(){ showSheet('#shProfile'); });
 $('#btnSettings').addEventListener('click',function(){ showSheet('#shSettings'); });
-$('#btnFog').addEventListener('click',function(){ if(fogLayer) fogOff(); else fogOn(); });
-$('#fogClose').addEventListener('click',fogOff);
+$('#btnFog').addEventListener('click',function(){ if(fogLayer) fogOff(true); else fogOn(); });
+$('#fogClose').addEventListener('click',function(){ fogOff(true); });
 $('#recenter').addEventListener('click',function(){ follow=true; this.classList.add('on'); map.setView(me.getLatLng(),Math.max(map.getZoom(),17),{animate:true}); haptic('light'); });
 
 function renderEvt(){ var ev=timeEvent(), fv=isFever()&&mode!=='demo'&&!SHOT, on=(!!ev||fv)&&mode!=='demo'; document.body.classList.toggle('evt-on',on); document.body.classList.toggle('fever',fv);
