@@ -29,6 +29,9 @@ jobs:
           H = {"Authorization": "Bearer " + tok}
           B = "https://api.appstoreconnect.apple.com/v1"
           r0 = requests.get(B + "/apps", params={"filter[bundleId]": "com.himori.jintori"}, headers=H, timeout=30)
+          if r0.status_code == 401:  # 個人キー（チームキーでない）なら iss の代わりに sub=user で通る
+              t2 = jwt.encode({"sub": "user", "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"}, os.environ["ASC_KEY_P8"], algorithm="ES256", headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"})
+              print("INDIVIDUAL_KEY_TRY status=%d" % requests.get(B + "/apps", params={"filter[bundleId]": "com.himori.jintori"}, headers={"Authorization": "Bearer " + t2}, timeout=30).status_code)
           if r0.status_code != 200:
               print("API_ERROR status=%d %s" % (r0.status_code, json.dumps([{k: e.get(k) for k in ("status", "code", "title", "detail")} for e in r0.json().get("errors", [])], ensure_ascii=False)))
               raise SystemExit(1)
