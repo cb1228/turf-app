@@ -2623,9 +2623,13 @@ function enableNotif(on){
 $('#ntfOn').addEventListener('click',function(){ closeModal('#ntfModal'); enableNotif(true); });
 $('#ntfOff').addEventListener('click',function(){ closeModal('#ntfModal'); notify('設定からいつでもONにできるよ'); });
 document.addEventListener('visibilitychange',function(){ if(document.hidden) planNotifs(); });
-var hidSince=0;
+var hidSince=0, hidSnap=null;
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden){ hidSince=Date.now(); return; }
+  if(document.hidden){ hidSince=Date.now(); hidSnap=walking?{d:segDist,c:claimed.size}:null; return; }
+  // 歩いている間にポケットから戻ったら「その間に何m・何マス」をひと言で（アプリはバックグラウンドでも記録している）
+  if(hidSnap&&walking&&mode==='real'){ var dd=segDist-hidSnap.d, dc=claimed.size-hidSnap.c;
+    if(dd>=50) notify('📱 おかえり！その間に '+fmtDist(Math.round(dd))+' 歩いて'+(dc>0?' '+fmtN(dc)+'マス 取ったよ':'いたよ')); }
+  hidSnap=null;
   if(hidSince&&Date.now()-hidSince>6*3600e3&&!walking&&!nativeP()&&mode==='real'&&!SHOT&&navigator.onLine!==false){ save(); location.reload(); }
   hidSince=0; });
 /* ---------- Web版: 歩いている間は画面を消さない（消えるとブラウザはGPSを止めるため） ---------- */
