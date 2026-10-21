@@ -1943,7 +1943,7 @@ function stopWalk(silent){
   if(watchId!==null){ var BG=bgGeo(); if(BG) BG.removeWatcher({id:watchId}); else navigator.geolocation.clearWatch(watchId); watchId=null; }
   // 宝箱などの演出待ちで出す予定だったレベルアップは、リザルトを閉じた後に回す（リザルトの上に重ならないように）
   if(walking&&lvFrom!==null){ clearTimeout(lvTimer); pendingLv={a:pendingLv?pendingLv.a:lvFrom,b:levelOf(S.xp)}; lvFrom=null; }
-  var was=walking; walking=false; wakeOff();
+  var was=walking; walking=false; wakeOff(); gpsLostAt=0; roughSince=0;
   lastMiss=null;
   if(mode==='real'&&path.length>=MIN_LOOP_PTS){ var gap=hav(path[path.length-1],path[0]), got=0; if(gap<=Math.min(150,pathLen(path)*0.25)&&loopOK(path)) got=fillPoly(path.slice());
     // 囲めずに終わったとき「あと何mで、何マス取れたか」をリザルトで教える
@@ -1957,15 +1957,17 @@ function stopWalk(silent){
 var fixBuf=[], fastN=0, roughShown=false, roughAt=0;
 function onFix(p){
   var c=p.coords, acc=c.accuracy||15;
-  if(gpsLostAt){ if(walking&&Date.now()-gpsLostAt>8000) notify('📡 GPSがつながった。続きから塗れるよ'); gpsLostAt=0; }
+  // 途切れ／精度低めから戻ったか（知らせは下で1回だけ）
+  var lostT=gpsLostAt||roughSince; if(acc<=45){ gpsLostAt=0; roughSince=0; }
   // 精度が低い（家の中など）: 道には使わないが、地図はおおよその現在地へ動かし、理由を伝える
-  if(acc>45){
+  if(acc>45){ if(walking&&!roughSince) roughSince=Date.now();
     if(!lastFix&&!roughShown){ roughShown=true; $('#hereHint').hidden=true; me.setLatLng([c.latitude,c.longitude]); me.setOpacity(.5); map.setView([c.latitude,c.longitude],16,{animate:true}); detectMuni(c.latitude,c.longitude); }
     if(Date.now()-roughAt>20000){ roughAt=Date.now(); notify('📡 GPSの精度が低め（±'+Math.round(acc)+'m）。外の、空が見える場所だと記録が始まるよ'); }
     return; }
   var now=p.timestamp||Date.now();
   // 長く途切れて遠くに現れた（画面オフ・トンネル）: 平均に古い位置を混ぜない
   var jump=!!(lastFix&&now-lastFix.t>30000&&hav(lastFix.pt,[c.latitude,c.longitude])>120); if(jump) fixBuf=[];
+  if(lostT&&walking&&!jump&&Date.now()-lostT>8000) notify('📡 GPSがつながった。ここから記録するよ');
   fixBuf.push([c.latitude,c.longitude]); if(fixBuf.length>4) fixBuf.shift();
   var la=0, lo=0; fixBuf.forEach(function(f){ la+=f[0]; lo+=f[1]; }); var pt=[la/fixBuf.length, lo/fixBuf.length];
   if(lastFix){ var d=hav(lastFix.pt,pt), dt=(now-lastFix.t)/1000;
@@ -1987,7 +1989,7 @@ function onErr(e){
   if(e.code===1){ stopWalk(true); showGeoHelp(); }
   else { var nw=Date.now(); if(!gpsLostAt) gpsLostAt=nw; if(nw-gpsLostMsg>25000){ gpsLostMsg=nw; notify('GPSを探しています…空が見える場所へ'); } }
 }
-var gpsLostAt=0, gpsLostMsg=0;
+var gpsLostAt=0, gpsLostMsg=0, roughSince=0;
 
 /* ---------- sheets & modals ---------- */
 var openSheet=null;
