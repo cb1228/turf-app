@@ -251,6 +251,9 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .grab{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:10px auto 2px;flex:none}
 .hd{display:flex;align-items:center;padding:8px 20px 12px;flex:none}
 .hd h3{margin:0;font-size:21px;font-weight:900;flex:1;letter-spacing:.02em}
+.hd h3{white-space:nowrap;min-width:0}
+.mis .m b,.m b{word-break:keep-all;overflow-wrap:anywhere}
+@media (max-width:360px){ body.big .sheet,body.big .mcard{zoom:1.05} .hd h3{font-size:19px} } /* 320px幅・大きい文字でも見出しや題が変なところで折れない */
 .hd .sub{font-size:12px;color:var(--mute);font-weight:800;margin-right:12px}
 .x{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;flex:none}
 .x svg{width:18px;height:18px}
@@ -941,7 +944,7 @@ var MPOOL={
   c120:{t:'今日 120マス 制圧',i:'🗺️',goal:120,key:'cells',xp:120,u:'マス'},
   b50:{t:'1回で 50マス以上 囲む',i:'🎯',goal:50,key:'best',xp:90,u:'マス'},
   g2:{t:'金マスを 2個 手に入れる',i:'💰',goal:2,key:'gold',xp:180,u:'個'},
-  m1:{t:'まんまるに囲んで「満月の陣」',i:'🌕',goal:1,key:'moon',xp:200,u:'回'}
+  m1:{t:'まんまるに 囲んで「満月の陣」',i:'🌕',goal:1,key:'moon',xp:200,u:'回'}
 };
 var MGROUPS=[['w500','w800','w1500','w3000'],['l1','l2','l3','k1','k2','k3'],['c60','c120','c200','b50','b100','g1','g2','m1']];
 // 今週の目標（月曜0時に切替・全員同じお題）
