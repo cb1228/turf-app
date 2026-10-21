@@ -1696,6 +1696,9 @@ function checkWeekly(){
   Object.keys(S.wd).forEach(function(k){ if(k!==wk) delete S.wd[k]; });
   var done=S.wd[wk], ms=weekMissions();
   ms.forEach(function(m){ if(done.indexOf(m.id)<0&&st[m.key]>=m.goal){ done.push(m.id); notify('🏅 今週の目標達成「'+m.t+'」 +'+m.xp+'XP'); haptic('success'); addXP(m.xp); } });
+  // 今週の目標があと少し（9割、または小さい目標はあと1つ）になったら、歩いている間に1回だけ知らせる
+  if(walking){ S.wn=S.wn&&S.wn.k===wk?S.wn:{k:wk,ids:[]}; ms.forEach(function(m){ if(done.indexOf(m.id)>=0||S.wn.ids.indexOf(m.id)>=0) return; var v=st[m.key]||0, r=m.goal-v;
+    if(r>0&&(v>=m.goal*.9||(m.goal<=10&&r===1))){ S.wn.ids.push(m.id); notify('🏅 あと'+(m.key==='d'?fmtDist(Math.max(10,Math.round(r/10)*10)):fmtN(r)+(m.u||''))+'で「'+m.t+'」達成！'); } }); }
   if(done.length>=ms.length&&done.indexOf('__clear')<0){ done.push('__clear'); S.weekClears=(S.weekClears||0)+1; S.clearWk=weekKeyL(); giveOmamori('週間制覇');
     notify('👑 週間制覇！ボーナス +'+WEEK_BONUS+'XP'); haptic('heavy'); sfx('level'); confetti(90,['#ffd23f','#fff3b0','#ffffff','#ff2d78']); addXP(WEEK_BONUS); }
 }
