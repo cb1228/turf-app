@@ -579,6 +579,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .resc .rarea{font-size:12.5px;font-weight:800;color:rgba(255,255,255,.7);text-wrap:balance}
 .rarea .rpref{display:block;margin-top:4px;font-size:12px;opacity:.85}
 .rrank{text-wrap:balance}
+.rrank .rnext{display:block;margin-top:3px;font-size:12px;font-weight:800;opacity:.85}.rrank .rnext b{color:#b6ff3a}
 .resc .rarea b{color:var(--gold);font-size:14px}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 12px}
 .rgrid div{padding:10px 8px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
@@ -1915,6 +1916,8 @@ function showResult(){
       if(!me||!me.rank){ rr.textContent='今週はまだランク外。囲んで参戦しよう！'; return; }
       var prev=(S.wkRank&&S.wkRank.w===d.week)?S.wkRank.r:null, diff=prev?prev-me.rank:0;
       rr.innerHTML='🏆 今週 <b>'+fmtN(me.rank)+'位</b> / '+fmtN(d.total)+'人'+(diff>0?' <span class="up">↑'+diff+'</span>':diff<0?' <span class="dn">↓'+(-diff)+'</span>':prev?'（キープ）':'');
+      // 次の順位まであと何マス（続けて歩く目安）
+      if(me.rank===1) rr.innerHTML+='<small class="rnext">👑 いま1位！このまま守りきろう</small>'; else if(me.next!=null&&me.next>=me.v) rr.innerHTML+='<small class="rnext">あと<b>'+fmtN(me.next-me.v+1)+'マス</b>で'+fmtN(me.rank-1)+'位</small>';
       S.wkRank={w:d.week,r:me.rank}; save();
       if(S.muni) return Promise.all([loadMuni(),fetch(API+'/api/rank?kind=week&m='+S.muni+'&id='+S.pid).then(function(r){return r.json();})]).then(function(x){
         var lm=x[1].me; if(lm&&lm.rank) rr.innerHTML+='<br>📍 '+esc(muniName(S.muni)||'地元')+' <b>'+fmtN(lm.rank)+'位</b> / '+fmtN(x[1].total)+'人'; }); })
