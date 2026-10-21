@@ -649,6 +649,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 @keyframes ocell{0%,8%{opacity:0;transform:scale(.3)}22%{opacity:1;transform:scale(1.12)}30%,82%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
 .float{animation:flt 2.4s ease-in-out infinite}
 @keyframes flt{50%{transform:translateY(-8px)}}
+#xpLeft.near{color:#b6ff3a;font-weight:900}
 </style>
 </head>
 <body>
@@ -1807,7 +1808,9 @@ function showLevelUp(a,b){
 function renderTop(){
   var L=levelOf(S.xp), a=need(L), b=need(L+1), pr=(S.xp-a)/Math.max(1,b-a);
   $('#lvNum').textContent=L; $('#lvNum2').textContent=L; $('#titleTxt').textContent=titleOf(L);
-  $('#xpLeft').textContent='あと'+fmtN(b-S.xp)+'XP';
+  // レベルアップ目前は、何になれるかを見せる（宝箱1〜2個で届く距離）
+  var rem=b-S.xp, nt=titleOf(L+1)!==titleOf(L), near=rem<=60, xl=$('#xpLeft');
+  xl.textContent='あと'+fmtN(rem)+'XP'+(near?(nt?'で「'+titleOf(L+1)+'」':'でLv.'+(L+1)):''); xl.classList.toggle('near',near);
   $('#ringFg').setAttribute('stroke-dashoffset',(119.4*(1-pr)).toFixed(1));
   var st=streakNow(); $('#streakN').textContent=st; $('#streak').classList.toggle('off',st===0); $('#streak').hidden=(st<2&&!S.omamori); // 0日・1日の🔥は出さない（連続を気にさせない） $('#omaN').textContent=S.omamori?'🧿'+S.omamori:'';
 }
