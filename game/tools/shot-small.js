@@ -34,6 +34,12 @@ const srv = http.createServer((q, w) => {
   const res = await p.evaluate(() => { const m = document.querySelector('#resModal .mcard') || document.getElementById('resModal'); const r = m.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight, sh: m.scrollHeight, ch: m.clientHeight }; });
   console.log('result', JSON.stringify(res));
   await p.screenshot({ path: path.join(OUT, 'small_result.png') });
+  if (process.env.SHARE) { // 領地カードの画面
+    await p.evaluate(() => document.getElementById('rShare').click()); await sleep(3500);
+    console.log('share', await p.evaluate(() => { const m = document.querySelector('#shareModal .mcard'); const r = m && m.getBoundingClientRect(); return r && { top: r.top, bottom: r.bottom, sh: m.scrollHeight, ch: m.clientHeight }; }));
+    await p.screenshot({ path: path.join(OUT, 'small_share.png') });
+    await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
+  }
   await p.evaluate(() => document.getElementById('rClose').click()); await sleep(800);
   await p.evaluate(() => { document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); document.getElementById('btnRank').click(); }); await sleep(1500);
   await p.screenshot({ path: path.join(OUT, 'small_rank.png') });

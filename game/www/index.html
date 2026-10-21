@@ -626,6 +626,10 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   background:linear-gradient(135deg,rgba(255,45,120,.18),rgba(139,92,246,.18));border:1px solid rgba(255,45,120,.35)}
 .rrank .up{color:var(--lime)} .rrank .dn{color:#ff8fb0}
 .shimg{width:auto;max-width:100%;max-height:52vh;border-radius:18px;display:block;margin:0 auto 16px;box-shadow:0 16px 40px rgba(0,0,0,.6)}
+#doVideo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px}
+@media (max-width:360px){ #doVideo{font-size:13.5px} }
+@media (max-height:720px){ .shimg{max-height:48vh;margin-bottom:12px} }
+@media (max-height:600px){ .shimg{max-height:42vh;margin-bottom:10px} #shareModal .btnP{height:50px} #shareModal .btnS{height:46px} } /* 320×568でも「閉じる」まで1画面に */
 .mnote{font-size:11.5px;color:var(--mute);font-weight:700;margin-top:10px}
 
 /* ===== celebrate ===== */
@@ -858,7 +862,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 <div class="modal" id="shareModal"><div class="mcard">
   <img class="shimg" id="shareImg" alt="領地カード">
   <button class="btnP" id="doShare">シェアする</button>
-  <button class="btnS" id="doVideo" style="margin-top:10px">🎬 領地が広がる動画にする（6秒）</button>
+  <button class="btnS" id="doVideo" style="margin-top:10px">🎬 領地が広がる動画（6秒）</button>
   <button class="btnS" id="shareClose" style="margin-top:10px">閉じる</button>
   <div class="mnote">TikTok・インスタのストーリーにぴったりの縦長サイズ</div>
 </div></div>
@@ -2403,7 +2407,7 @@ function makeCard(rk,o,cv0){
 }
 function shareCard(){
   var rk={};
-  var go=function(){ vidRk=rk; vidBlob=null; var vb=$('#doVideo'); vb.classList.remove('ready'); vb.textContent='🎬 領地が広がる動画にする（6秒）'; vb.style.display=canVideo()?'':'none'; cardURL=makeCard(rk).toDataURL('image/png'); $('#shareImg').src=cardURL; closeSheet(); openModal('#shareModal'); };
+  var go=function(){ vidRk=rk; vidBlob=null; var vb=$('#doVideo'); vb.classList.remove('ready'); vb.textContent='🎬 領地が広がる動画（6秒）'; vb.style.display=canVideo()?'':'none'; cardURL=makeCard(rk).toDataURL('image/png'); $('#shareImg').src=cardURL; closeSheet(); openModal('#shareModal'); };
   var get=function(q){ return fetch(API+'/api/rank?'+q+'&id='+S.pid).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ return d.me; }).catch(function(){ return null; }); };
   clearTimeout(sendT);
   var code=function(){ if(S.fcode||S.moved) return; return fpost('/api/friend/code').then(function(r){ if(r&&r.code){ S.fcode=r.code; save(); } }).catch(function(){}); };

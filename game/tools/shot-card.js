@@ -11,7 +11,7 @@ const srv = http.createServer((q, w) => {
 }).listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}`, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true, userDataDir: require('os').tmpdir() + '/turf-shot-' + Date.now() });
-  const p = await br.newPage(); await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2 });
+  const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 });
   p.on('pageerror', (e) => console.log('ERR', e.message));
   await p.goto(base + '/turf.html?shot=card', { waitUntil: 'domcontentloaded' }); await sleep(5000);
   const src = await p.evaluate(() => { const i = document.getElementById('shareImg'); return i && i.src; });
