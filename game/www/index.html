@@ -658,7 +658,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .art{width:min(68vw,270px);height:min(68vw,270px);margin-bottom:30px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.5))}
 .slide h2{font-size:25px;font-weight:900;line-height:1.4;margin:0 0 12px;letter-spacing:.01em}
 .slide h2 em{font-style:normal;color:var(--lime)}
-.slide p{font-size:14.5px;line-height:1.8;color:rgba(255,255,255,.7);margin:0;font-weight:700}
+.slide p{font-size:14.5px;line-height:1.8;color:rgba(255,255,255,.7);margin:0;font-weight:700;word-break:keep-all;overflow-wrap:anywhere}
 .dots{display:flex;gap:8px;justify-content:center;margin:6px 0 18px}
 .dots i{width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.25);transition:all .3s}
 .dots i.on{width:28px;background:var(--lime)}
@@ -1964,7 +1964,7 @@ function startWalk(){
   if(!BG&&!navigator.geolocation){ notify('この端末は位置情報に対応していません'); return; }
   fogOff(); walkMuni=null; walking=true; follow=true; $('#recenter').classList.add('on'); path=[]; pathLine.setLatLngs([]); segDist=0; lastFix=null; fixBuf=[]; fastN=0;
   // 夜おそく（22時〜5時）に出陣したら、その夜に一度だけ安全のひと言
-  var hh=new Date().getHours(); if(mode==='real'&&(hh>=22||hh<5)&&S.nightTip!==dayKey(new Date(Date.now()-5*3600e3))){ S.nightTip=dayKey(new Date(Date.now()-5*3600e3)); setTimeout(function(){ notify('🌙 夜道は明るい道で。車と足元に気をつけてね'); },1200); }
+  var hh=new Date().getHours(); if(mode==='real'&&(hh>=22||hh<5)&&S.nightTip!==dayKey(new Date(Date.now()-5*3600e3))){ S.nightTip=dayKey(new Date(Date.now()-5*3600e3)); var nt=0, night=function(){ if(!walking) return; if((!lastFix||coachOn)&&++nt<60){ setTimeout(night,1500); return; } notify('🌙 夜道は明るい道で。車と足元に気をつけてね'); }; setTimeout(night,1500); } // 位置が見つかり、説明の吹き出しを閉じてから（はじめの画面に知らせが重ならないように）
   sess={t0:Date.now(),cells:claimed.size,area:areaOf(claimed),xp:S.xp,lv:levelOf(S.xp),loops:S.loops||0,chests:S.chests||0,gold:S.gold||0};
   renderGo(); haptic('heavy'); sfx('start'); if(S.tut&&S.tut.walk) notify('出陣！ぐるっと一周すると領地に'); wakeOn(); hiddenAt=0; roughShown=false; roughAt=0;
   if(!$('#hereHint').hidden) $('#hereHint').innerHTML='📡 現在地をさがしています…<br><b>外の、空が見える場所</b>だと早く見つかるよ';
