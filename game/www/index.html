@@ -198,6 +198,8 @@ body.calm .guide.near{animation:none}
 .main .t{text-align:left}
 .main .t b{display:block;font-size:19px;font-weight:900;line-height:1.05;letter-spacing:.03em}
 .main .t small{display:block;font-size:11px;font-weight:800;opacity:.68;margin-top:2px;font-variant-numeric:tabular-nums}
+.main .t b,.main .t small{white-space:nowrap}
+@media (max-width:360px){ .dock{gap:8px;padding-left:10px;padding-right:10px} .main{gap:8px} .main svg{width:22px;height:22px} .main .t b{font-size:17px} .main .t small{font-size:10px} body.big .dock{zoom:1.05} } /* 320px幅・大きい文字でも「出陣する」が1行に収まる */
 .main.walking{background:linear-gradient(135deg,#ff6aa0,#ff2d78 50%,#8b5cf6);color:#fff;box-shadow:0 10px 32px rgba(255,45,120,.45),inset 0 1px 0 rgba(255,255,255,.35)}
 .main.walking::after{content:"";position:absolute;inset:-5px;border-radius:29px;border:2px solid rgba(255,45,120,.7);animation:ring 1.6s ease-out infinite}
 @keyframes ring{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.07,1.25)}}

@@ -26,11 +26,14 @@ const srv = http.createServer((q, w) => {
     return r.respond({ status: 200, contentType: 'text/plain', body: '' }); });
   await p.goto(base + '/turf.html', { waitUntil: 'domcontentloaded' }); await sleep(2500);
   await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
+  const cut = async (nm) => { if (process.env.CUT) console.log('cut', nm, await p.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => { const r = e.getBoundingClientRect(); if (!r.width || !e.childElementCount && !e.textContent.trim()) return false; const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || +cs.opacity === 0) return false; return e.scrollWidth > e.clientWidth + 1 && (cs.overflow !== 'visible' || cs.textOverflow === 'ellipsis') && e.clientWidth > 0 && !/leaflet|scroll|tabs|slider|pane|sl/.test(e.className + ''); }).map((e) => (e.id || e.className + '') + ':' + e.textContent.trim().slice(0, 30)).slice(0, 15))); };
+  await cut('home');
   if (process.env.TODAYFIT) console.log('today', await p.evaluate(() => [...document.querySelectorAll('.today b,.today small')].map((e) => e.textContent + (e.scrollWidth > e.clientWidth ? ' ✗切れ' : ' ○'))));
   await p.screenshot({ path: path.join(OUT, 'sc_home.png') });
   const shots = [['sc_missions', "document.getElementById('btnMissions')"], ['sc_settings', "document.getElementById('btnSettings')"], ['sc_profile', "document.getElementById('rankCard')"]];
   for (const [name, sel] of shots) {
     await p.evaluate((s) => { const e = eval(s); if (e) e.click(); }, sel); await sleep(900);
+    await cut(name);
     await p.screenshot({ path: path.join(OUT, name + '.png') });
     await p.evaluate(() => { if (window.closeSheet) closeSheet(); document.querySelectorAll('.sheet.show').forEach((m) => m.classList.remove('show')); document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); }); await sleep(500);
   }
