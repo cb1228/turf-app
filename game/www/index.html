@@ -765,6 +765,13 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <div id="instBody"></div>
   <button class="btnS" id="instClose" style="margin-top:14px">あとで</button>
 </div></div>
+<div class="modal" id="endModal"><div class="mcard instc"><div class="rays"></div>
+  <div class="ntfart">🚩</div>
+  <div class="lvk">まだ囲めていないよ</div>
+  <div class="why" style="position:relative" id="endWhy"></div>
+  <button class="btnP" id="endKeep">歩き続ける</button>
+  <button class="btnS" id="endStop" style="margin-top:10px">ここで終わる</button>
+</div></div>
 <div class="modal" id="ntfModal"><div class="mcard instc"><div class="rays"></div>
   <div class="ntfart">🎁</div>
   <div class="lvk">近くの宝箱のお知らせ</div>
@@ -2503,7 +2510,13 @@ function initOnb(){
 function finishOnb(){ S.onb=true; save(); $('#onb').classList.add('hide'); if(pendingCode) setTimeout(openPendingInvite,600); }
 
 /* ---------- wiring ---------- */
-$('#btnGo').addEventListener('click',function(){ if(mode==='demo') return; if(walking) stopWalk(); else startWalk(); });
+// 囲めそうなのに終わろうとしたら、あと何mで何マス取れるかを見せて確かめる
+function endWarn(){ if(mode!=='real'||path.length<MIN_LOOP_PTS||pathLen(path)<LOOP_MIN_P*0.6) return null; var gap=hav(path[path.length-1],path[0]);
+  if(gap<=Math.min(150,pathLen(path)*0.25)&&loopOK(path)) return null; var ne=newCellsEst(path); return ne>=10?{gap:Math.max(10,Math.round(gap/10)*10),n:ne}:null; }
+$('#btnGo').addEventListener('click',function(){ if(mode==='demo') return; if(!walking){ startWalk(); return; } var w=endWarn();
+  if(w){ $('#endWhy').innerHTML='スタートの旗まで<b>あと約'+fmtDist(w.gap)+'</b>。戻って囲めば<b>約'+fmtN(w.n)+'マス</b>が自分の領地になるよ。'; openModal('#endModal'); return; } stopWalk(); });
+$('#endKeep').addEventListener('click',function(){ closeModal('#endModal'); });
+$('#endStop').addEventListener('click',function(){ closeModal('#endModal'); if(walking) stopWalk(); });
 $('#btnMissions').addEventListener('click',function(){ showSheet('#shMissions'); });
 $('#btnRank').addEventListener('click',function(){ showSheet('#shRank'); });
 $('#tdMis').addEventListener('click',function(){ showSheet('#shMissions'); haptic('light'); });

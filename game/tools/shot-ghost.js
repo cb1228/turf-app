@@ -48,7 +48,9 @@ const srv = http.createServer((q, w) => {
   console.log(await p.evaluate(() => [(document.querySelector('path.ghost') || { getBoundingClientRect: () => ({ toJSON: () => null }) }).getBoundingClientRect().toJSON(), document.querySelector('path.route').getBoundingClientRect().toJSON()]));
   await p.screenshot({ path: path.join(OUT, process.env.FIRST ? 'ghost_first.png' : process.env.OWN ? 'ghost_own.png' : 'ghost.png') });
   if (process.env.PAUSE) { // 囲まずに一時停止したときのリザルト
-    await p.evaluate(() => document.getElementById('btnGo').click()); await sleep(1800);
+    await p.evaluate(() => document.getElementById('btnGo').click()); await sleep(700);
+    await p.screenshot({ path: path.join(OUT, 'ghost_end.png') }); // 囲めそうなのに終わろうとしたときの確認
+    await p.evaluate(() => document.getElementById('endStop').click()); await sleep(1800);
     console.log(await p.evaluate(() => document.getElementById('rArea').innerText));
     await p.screenshot({ path: path.join(OUT, 'ghost_pause.png') });
   }

@@ -14,6 +14,6 @@ const srv = http.createServer((q, w) => { const fp = path.join(SITE, decodeURICo
     await p.evaluate((c) => window.__delve.start(c), CLS); await sleep(2600);
     // 一番近い敵の 2マス手前まで寄せる（戦っている絵を撮る）
     await p.evaluate(() => { const D = window.__delve, P = D.P(), G = D.G(); const e = G.ents.filter((x) => x.k !== 'shop').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; if (e) { for (const [dx, dy] of [[-1.6, .3], [1.6, .3], [0, 1.6], [0, -1.6], [-1, 1], [1, 1]]) { const tx = Math.floor(e.x + dx), ty = Math.floor(e.y + dy); if (G.map[ty] && G.map[ty][tx] === 0) { P.x = tx + .5; P.y = ty + .5; break; } } } });
-    await sleep(900); await p.screenshot({ path: path.join(OUT, 'v_' + name + '_play.png') });
+    await sleep(900); await p.evaluate(() => { window.__delve.P().inv = 0; }); await sleep(40); await p.screenshot({ path: path.join(OUT, 'v_' + name + '_play.png') });
   }
   await br.close(); srv.close(); });
