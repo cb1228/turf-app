@@ -1474,7 +1474,10 @@ function nextToast(){ var w=(celBusyUntil||0)-Date.now(); if(w>0&&tq.length){ tB
 
 /* ---------- map ---------- */
 var map=L.map('map',{zoomControl:false,attributionControl:true}).setView([35.681236,139.767125],17);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16,attribution:'© Esri',className:'basemap'}).addTo(map);
+// 電波が弱くて読めなかった地図の区画は、壊れた画像の印を出さずに透明にし、少し待って2回まで読み直す
+var BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+var baseL=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16,attribution:'© Esri',className:'basemap',errorTileUrl:BLANK}).addTo(map);
+baseL.on('tileerror',function(e){ var t=e.tile, n=(t._rt||0)+1; if(n>2) return; t._rt=n; var u=baseL.getTileUrl(e.coords); setTimeout(function(){ if(t.parentNode) t.src=u+(u.indexOf('?')<0?'?':'&')+'r='+n; },3000*n); });
 var goldLayer=L.layerGroup().addTo(map);
 map.createPane('cells'); map.getPane('cells').style.zIndex=350; map.getPane('cells').style.pointerEvents='none';
 var animating=new Set(), settleT=null, settleAt=0;

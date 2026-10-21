@@ -12,7 +12,7 @@ const srv = http.createServer((q, w) => {
 }).listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}`, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true, userDataDir: require('os').tmpdir() + '/turf-shot-' + Date.now() });
-  const p = await br.newPage(); await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2 });
+  const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 });
   const own = []; if (process.env.OWN) for (let y = Math.floor(35.684 / 0.0003); y <= Math.floor(35.688 / 0.0003); y++) for (let x = Math.floor(139.769 / 0.0003); x <= Math.floor(139.773 / 0.0003); x++) own.push(x + ',' + y);
   await p.evaluateOnNewDocument((o, f) => { window.__own = o; window.__first = f; }, own, !!process.env.FIRST);
   await p.evaluateOnNewDocument(() => {
@@ -47,6 +47,7 @@ const srv = http.createServer((q, w) => {
   await p.evaluate(() => { try { const r = document.querySelector('path.route').getBoundingClientRect(), mp = document.querySelector('.leaflet-map-pane'), m = mp.style.transform.match(/(-?[\d.]+)px, (-?[\d.]+)px/); mp.style.transform = 'translate3d(' + (+m[1] + 187 - (r.x + r.width / 2)) + 'px,' + (+m[2] + 360 - (r.y + r.height / 2)) + 'px,0)'; } catch (e) { console.log(e.message); } }); await sleep(600);
   console.log(await p.evaluate(() => [document.querySelector('.leaflet-container').getBoundingClientRect().toJSON(), document.querySelector('.leaflet-map-pane').style.transform, document.querySelector('.leaflet-overlay-pane svg').getAttribute('style'), document.querySelector('.me') && document.querySelector('.me').getBoundingClientRect().y]));
   console.log(await p.evaluate(() => [(document.querySelector('path.ghost') || { getBoundingClientRect: () => ({ toJSON: () => null }) }).getBoundingClientRect().toJSON(), document.querySelector('path.route').getBoundingClientRect().toJSON()]));
+  if (process.env.IMGS) console.log(await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).map((i) => i.src.slice(0, 120) + ' ' + i.className)));
   await p.screenshot({ path: path.join(OUT, process.env.FIRST ? 'ghost_first.png' : process.env.OWN ? 'ghost_own.png' : 'ghost.png') });
   if (process.env.RESULT) { // 囲んでから終えたときの記録（県の割合の行）
     await sleep(3500); await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
