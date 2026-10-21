@@ -1704,6 +1704,9 @@ function checkMissions(){
   var k=dayKey(),t=today(); S.md[k]=S.md[k]||[];
   todaysMissions().forEach(function(m){
     if(S.md[k].indexOf(m.id)<0&&t[m.key]>=m.goal){ S.md[k].push(m.id); notify('🎯 ミッション達成「'+m.t+'」 +'+m.xp+'XP'); haptic('success'); addXP(m.xp); }
+    // あと少しで達成（距離は8割・数はあと1つ）を、歩いている間に1回だけ知らせる
+    else if(walking&&S.md[k].indexOf(m.id)<0){ var v=t[m.key]||0, near=m.key==='d'?v>=m.goal*.8:(m.goal>=2&&v===m.goal-1); S.mn=S.mn||{}; if(S.mn.k!==k) S.mn={k:k,ids:[]};
+      if(near&&S.mn.ids.indexOf(m.id)<0){ S.mn.ids.push(m.id); notify('🎯 あと'+(m.key==='d'?fmtDist(Math.max(10,Math.round((m.goal-v)/10)*10)):'1'+(m.u||''))+'で「'+m.t+'」達成！'); } }
   });
   var mk=Object.keys(S.md).sort(); while(mk.length>7){ delete S.md[mk.shift()]; }
   checkWeekly();
