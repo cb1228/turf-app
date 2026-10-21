@@ -563,6 +563,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   .btnPro{height:52px}.prolink{margin:6px 0 0}.pronote{margin-top:4px;font-size:10.5px}
   .mcard .btnS{height:46px}
 }
+.rayw{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit} /* 回る光が札の外にはみ出してスクロールできてしまわないように */
 .rays{position:absolute;left:50%;top:92px;width:520px;height:520px;margin:-260px 0 0 -260px;pointer-events:none;opacity:.5;
   background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.22) 0 8deg,transparent 8deg 22deg);animation:spin 14s linear infinite;
   -webkit-mask:radial-gradient(circle,#000 10%,transparent 62%);mask:radial-gradient(circle,#000 10%,transparent 62%)}
@@ -755,7 +756,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <div class="bd" id="setBody"></div>
 </section>
 
-<div class="modal" id="chestModal"><div class="mcard chestc"><div class="rays"></div>
+<div class="modal" id="chestModal"><div class="mcard chestc"><div class="rayw"><div class="rays"></div></div>
   <div class="art" id="chestArt"></div>
   <div class="rwd"><div class="lvk" id="chestKind">宝箱</div>
   <div class="lvbig"><b id="chestXp">+0</b> XP</div>
@@ -767,14 +768,14 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <div id="xferBody"></div>
   <button class="btnS" id="xferClose" style="margin-top:14px">閉じる</button>
 </div></div>
-<div class="modal" id="seasonModal"><div class="mcard"><div class="rays"></div>
+<div class="modal" id="seasonModal"><div class="mcard"><div class="rayw"><div class="rays"></div></div>
   <div class="lvk" id="snMo">シーズン</div>
   <div class="lvt" style="margin-top:6px">結果発表</div>
   <div class="sngrid" id="snGrid"></div>
   <div class="unl" id="snBadge"></div>
   <button class="btnP" id="snOk">来月も天下を取る！</button>
 </div></div>
-<div class="modal" id="recapModal"><div class="mcard"><div class="rays"></div>
+<div class="modal" id="recapModal"><div class="mcard"><div class="rayw"><div class="rays"></div></div>
   <div class="lvk">先週のふりかえり</div>
   <div class="lvt" id="rcRange" style="margin-top:4px"></div>
   <div class="sngrid rcgrid" id="rcGrid"></div>
@@ -782,7 +783,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <div class="unl" id="rcNext"></div>
   <button class="btnP" id="rcOk">今週も出陣！</button>
 </div></div>
-<div class="modal" id="newsModal"><div class="mcard instc"><div class="rays"></div>
+<div class="modal" id="newsModal"><div class="mcard instc"><div class="rayw"><div class="rays"></div></div>
   <div class="lvk">アップデート</div>
   <div class="lvt" style="margin-top:4px;text-align:center" id="newsVer"></div>
   <div class="gsteps" id="newsList" style="margin-top:12px"></div>
@@ -793,14 +794,14 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <div id="instBody"></div>
   <button class="btnS" id="instClose" style="margin-top:14px">あとで</button>
 </div></div>
-<div class="modal" id="endModal"><div class="mcard instc"><div class="rays"></div>
+<div class="modal" id="endModal"><div class="mcard instc"><div class="rayw"><div class="rays"></div></div>
   <div class="ntfart">🚩</div>
   <div class="lvk">まだ囲めていないよ</div>
   <div class="why" style="position:relative" id="endWhy"></div>
   <button class="btnP" id="endKeep">歩き続ける</button>
   <button class="btnS" id="endStop" style="margin-top:10px">ここで終わる</button>
 </div></div>
-<div class="modal" id="ntfModal"><div class="mcard instc"><div class="rays"></div>
+<div class="modal" id="ntfModal"><div class="mcard instc"><div class="rayw"><div class="rays"></div></div>
   <div class="ntfart">🎁</div>
   <div class="lvk">近くの宝箱のお知らせ</div>
   <div class="why" style="position:relative">歩いていない日だけ、<b>夜7時に1回</b>、いつもの場所の近くに出ている<b>宝箱の数</b>をお知らせ。月曜の朝には<b>今週の目標</b>が届いたことを知らせます。しつこい通知はしません。</div>
@@ -839,7 +840,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   <button class="btnS" id="proClose" style="margin-top:6px">閉じる</button>
   <div class="pronote" id="proNote"></div>
 </div></div>
-<div class="modal" id="lvModal"><div class="mcard"><div class="rays"></div>
+<div class="modal" id="lvModal"><div class="mcard"><div class="rayw"><div class="rays"></div></div>
   <div class="lvk">LEVEL UP</div>
   <div class="lvbig">Lv.<b id="lvNew">2</b></div>
   <div class="lvt"><span id="lvTitle">足軽</span></div>
