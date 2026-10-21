@@ -27,6 +27,7 @@ const srv = http.createServer((q, w) => {
   await p.setRequestInterception(true);
   p.on('request', (r) => { const u = r.url();
     if (u.includes('/api/')) return r.respond({ status: 200, contentType: 'application/json', body: '{"ok":true,"top":[],"total":0}' });
+    if (u.includes('reverse-geocoder')) return r.respond({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"results":{"muniCd":"13102"}}' }); // 地名は東京都中央区として答える
     if (u.startsWith(base)) return r.continue();
     return r.respond({ status: 200, contentType: 'text/plain', body: '' }); });
   await p.goto(base + '/turf.html', { waitUntil: 'domcontentloaded' }); await sleep(2000);
@@ -47,6 +48,12 @@ const srv = http.createServer((q, w) => {
   console.log(await p.evaluate(() => [document.querySelector('.leaflet-container').getBoundingClientRect().toJSON(), document.querySelector('.leaflet-map-pane').style.transform, document.querySelector('.leaflet-overlay-pane svg').getAttribute('style'), document.querySelector('.me') && document.querySelector('.me').getBoundingClientRect().y]));
   console.log(await p.evaluate(() => [(document.querySelector('path.ghost') || { getBoundingClientRect: () => ({ toJSON: () => null }) }).getBoundingClientRect().toJSON(), document.querySelector('path.route').getBoundingClientRect().toJSON()]));
   await p.screenshot({ path: path.join(OUT, process.env.FIRST ? 'ghost_first.png' : process.env.OWN ? 'ghost_own.png' : 'ghost.png') });
+  if (process.env.RESULT) { // 囲んでから終えたときの記録（県の割合の行）
+    await sleep(3500); await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
+    await p.evaluate(() => { document.getElementById('btnGo').click(); }); await sleep(2500);
+    console.log(await p.evaluate(() => document.getElementById('rArea').innerText));
+    await p.screenshot({ path: path.join(OUT, 'ghost_result.png') });
+  }
   if (process.env.PAUSE) { // 囲まずに一時停止したときのリザルト
     await p.evaluate(() => document.getElementById('btnGo').click()); await sleep(700);
     await p.screenshot({ path: path.join(OUT, 'ghost_end.png') }); // 囲めそうなのに終わろうとしたときの確認

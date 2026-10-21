@@ -577,6 +577,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(141,255,31,.45))}
 .resc .rbig span{font-size:20px;font-weight:900;margin-left:4px}
 .resc .rarea{font-size:12.5px;font-weight:800;color:rgba(255,255,255,.7);text-wrap:balance}
+.rarea .rpref{display:block;margin-top:4px;font-size:12px;opacity:.85}
 .rrank{text-wrap:balance}
 .resc .rarea b{color:var(--gold);font-size:14px}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 12px}
@@ -1880,6 +1881,12 @@ function nearestChestEl(){ var best=null, bd=1e9, cx=innerWidth/2, cy=innerHeigh
 /* ---------- result (出陣の記録) ---------- */
 var sess=null;
 function countUp(el,to,pre,ms){ var t0=performance.now(); (function f(now){ var k=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-k,3); el.textContent=pre+fmtN(to*e); if(k<1) requestAnimationFrame(f); })(t0); }
+// 記録に「◯◯県の何%」を添える（県ごとの面積に対する自分の領地の割合。今回の分も）
+function prefLine(area){ var mc=walkMuni||S.muni; if(!MUNI&&mc){ loadMuni().then(function(){ if(MUNI) prefLine(area); }); return; } try{ var pf=MUNI&&mc&&MUNI[mc]&&MUNI[mc][0]; if(!pf||!PREF_KM2[pf]) return;
+  var gs=placeGroups(), st=prefStats(gs), tot=st[pf]?st[pf].a:0, ll=me.getLatLng(), m=PL_G;
+  var here=gs.filter(function(o){ return ll.lat>=o.b[0][0]-m&&ll.lat<=o.b[1][0]+m&&ll.lng>=o.b[0][1]-m&&ll.lng<=o.b[1][1]+m; })[0];
+  if(!here||!(S.pp&&S.pp[here.key])) tot+=area;
+  var el=document.createElement('small'); el.className='rpref'; el.textContent='🗾 '+pf+'の '+prefPct(tot,pf)+(tot>area*1.01?'（今回 +'+prefPct(area,pf)+'）':''); $('#rArea').appendChild(el); }catch(e){} }
 function showResult(){
   var s0=sess; sess=null;
   var cells=claimed.size-s0.cells, area=areaOf(claimed)-s0.area, xp=S.xp-s0.xp, L=levelOf(S.xp), a=need(L), b=need(L+1);
@@ -1888,7 +1895,7 @@ function showResult(){
   $('#rTime').textContent=(min>=60?Math.floor(min/60)+'時間'+(min%60)+'分':min+'分')+' ・ '+fmtDist(segDist)+(nm2>=2?' ・ '+nm2+'つの街':'');
   countUp($('#rCells'),cells,'+',900);
   var noLoop=(S.loops||0)===s0.loops;
-  if(area>0&&!(noLoop&&lastMiss)) $('#rArea').textContent=fmtArea(area)+' ・ '+headline(area);
+  if(area>0&&!(noLoop&&lastMiss)){ $('#rArea').textContent=fmtArea(area)+' ・ '+headline(area); prefLine(area); }
   else $('#rArea').innerHTML= lastMiss ? 'おしい！あと<b>'+fmtDist(lastMiss.gap)+'</b>でスタートに戻れば、約<b>'+fmtN(lastMiss.n)+'</b>マス取れてた' : '🚩スタートに戻るか、自分の道と交差すると、内側が領地になるよ';
   var items=[['囲んだ',((S.loops||0)-s0.loops)+'回'],['宝箱',((S.chests||0)-s0.chests)+'個'],['金マス',((S.gold||0)-s0.gold)+'個'],['今月',monthDays()+'日👣']];
   $('#rGrid').innerHTML=items.map(function(x){return '<div><small>'+x[0]+'</small><b>'+x[1]+'</b></div>';}).join('');
