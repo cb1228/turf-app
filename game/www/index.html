@@ -1574,8 +1574,13 @@ function drawChests(){
 }
 function nearChests(lat,lng){
   if(mode!=='real') return; var d=dayKey(), op=openedToday(), gx=Math.floor(lng/CHG), gy=Math.floor(lat/CHG);
-  for(var y=gy-1;y<=gy+1;y++)for(var x=gx-1;x<=gx+1;x++){ var ch=chestAt(x,y,d); if(ch&&op.indexOf(ch.k)<0&&hav([lat,lng],[ch.lat,ch.lng])<=CHEST_M) openChest(ch); }
+  for(var y=gy-1;y<=gy+1;y++)for(var x=gx-1;x<=gx+1;x++){ var ch=chestAt(x,y,d); if(!ch||op.indexOf(ch.k)>=0) continue; var dm=hav([lat,lng],[ch.lat,ch.lng]);
+    if(dm<=CHEST_M) openChest(ch);
+    // 歩いていて宝箱に近づいたら、方角と距離を1回だけ知らせる（気づかず通り過ぎないように）
+    else if(walking&&dm<=120&&!chestHint[d+ch.k]&&Date.now()-chestHintT>60000){ chestHint[d+ch.k]=1; chestHintT=Date.now(); var bg=Math.atan2((ch.lng-lng)*Math.cos(lat*Math.PI/180),ch.lat-lat)*180/Math.PI, ar='↑↗→↘↓↙←↖'.charAt(((Math.round(bg/45)%8)+8)%8);
+      notify('🎁 '+ar+' '+fmtN(Math.round(dm/10)*10)+'m先に'+CHEST[ch.t].n); } }
 }
+var chestHint={}, chestHintT=0; // 知らせは1分に1回まで
 var chestQ=[];
 function openChest(ch){
   var op=openedToday(); if(op.indexOf(ch.k)>=0) return; op.push(ch.k);
