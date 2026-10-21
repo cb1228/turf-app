@@ -214,7 +214,7 @@ body.calm .guide.near{animation:none}
 .rival.hot b{color:#ff5a95}
 body.big .rival{zoom:1.14}
 .top .rk small{white-space:nowrap}
-@media (max-width:400px){ body.big .top .rk small{display:none} body.big .rival{max-width:calc(100% - 100px)} body.big .guide{zoom:1} body.big .evt{zoom:1} } /* 輪の中にレベルが出ているので、狭い画面の「文字を大きく」では小さい行を省く */
+@media (max-width:400px){ body.big .top .rk small{display:none} body.big .top .rk small:has(.near){display:block;font-size:10.5px} body.big .top .rk small:has(.near) .lvp{display:none} body.big .rival{max-width:calc(100% - 100px)} body.big .guide{zoom:1} body.big .evt{zoom:1} } /* 輪の中にレベルが出ているので、狭い画面の「文字を大きく」では小さい行を省く */
 .today{position:absolute;z-index:999;left:14px;right:14px;bottom:calc(var(--sab) + 100px);display:flex;gap:8px}
 .today[hidden]{display:none}
 .today button{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:16px;text-align:left;color:#fff;font:inherit}
@@ -685,7 +685,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
       <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4"/>
       <circle class="fg" id="ringFg" cx="22" cy="22" r="19" fill="none" stroke="url(#gx)" stroke-width="4" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4"/></svg>
       <b id="lvNum">1</b></div>
-    <div class="rk"><small>Lv.<span id="lvNum2">1</span> ・ <span id="xpLeft">あと80XP</span></small><strong id="titleTxt">足軽</strong></div>
+    <div class="rk"><small><span class="lvp">Lv.<span id="lvNum2">1</span> ・ </span><span id="xpLeft">あと80XP</span></small><strong id="titleTxt">足軽</strong></div>
   </button>
   <div class="spacer"></div>
   <div class="streak glass off" id="streak" title="連続日数"><span>🔥</span><span id="streakN">0</span><small id="omaN" class="oma"></small></div>

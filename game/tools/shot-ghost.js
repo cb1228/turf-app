@@ -14,14 +14,15 @@ const srv = http.createServer((q, w) => {
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true, userDataDir: require('os').tmpdir() + '/turf-shot-' + Date.now() });
   const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 });
   const own = []; if (process.env.OWN) for (let y = Math.floor(35.684 / 0.0003); y <= Math.floor(35.688 / 0.0003); y++) for (let x = Math.floor(139.769 / 0.0003); x <= Math.floor(139.773 / 0.0003); x++) own.push(x + ',' + y);
-  await p.evaluateOnNewDocument((o, f) => { window.__own = o; window.__first = f; }, own, !!process.env.FIRST);
+  await p.evaluateOnNewDocument((o, f, b) => { window.__own = o; window.__first = f; window.__big = b; }, own, !!process.env.FIRST, !!process.env.BIG);
+  if (process.env.NIGHT) await p.evaluateOnNewDocument(() => { Date.prototype.getHours = function () { return 23; }; document.addEventListener('DOMContentLoaded', () => { const t = document.getElementById('toast'); if (t) new MutationObserver(() => { (window.__toasts = window.__toasts || []).push(t.textContent.replace(/​/g, '')); }).observe(t, { childList: true, characterData: true, subtree: true }); }); }); // 夜の注意の出方を確かめる
   await p.evaluateOnNewDocument(() => {
     const G = Geolocation.prototype; let cb = null, tt = Date.now();
     G.getCurrentPosition = function (ok) { ok && ok({ coords: { latitude: 35.6852, longitude: 139.7700, accuracy: 8 }, timestamp: Date.now() }); };
     G.watchPosition = function (ok) { cb = ok; return 1; }; G.clearWatch = function () {};
     window.__fix = (la, lo) => cb && cb({ coords: { latitude: la, longitude: lo, accuracy: 8, speed: 1.3 }, timestamp: (tt += 12000) });
     if (navigator.permissions) navigator.permissions.query = () => Promise.resolve({ state: 'granted' });
-    localStorage.setItem('turf_v3', JSON.stringify({ onb: true, tut: { walk: 1, loop: 1, chest: 1, rank: 1, mission: 1, gps: 1 }, n: [5, 2], av: 2, xp: 2400, loops: window.__first ? 0 : 6, ll: [35.6852, 139.77], newsSeen: '9.9.9', lastDay: '2026-10-15', c: window.__own || [] }));
+    localStorage.setItem('turf_v3', JSON.stringify({ onb: true, tut: { walk: 1, loop: 1, chest: 1, rank: 1, mission: 1, gps: 1 }, n: [5, 2], av: 2, xp: 2400, loops: window.__first ? 0 : 6, ll: [35.6852, 139.77], newsSeen: '9.9.9', lastDay: '2026-10-15', big: !!window.__big, c: window.__own || [] }));
   });
   p.on('pageerror', (e) => console.log('ERR', e.message));
   await p.setRequestInterception(true);
@@ -47,6 +48,7 @@ const srv = http.createServer((q, w) => {
   await p.evaluate(() => { try { const r = document.querySelector('path.route').getBoundingClientRect(), mp = document.querySelector('.leaflet-map-pane'), m = mp.style.transform.match(/(-?[\d.]+)px, (-?[\d.]+)px/); mp.style.transform = 'translate3d(' + (+m[1] + 187 - (r.x + r.width / 2)) + 'px,' + (+m[2] + 360 - (r.y + r.height / 2)) + 'px,0)'; } catch (e) { console.log(e.message); } }); await sleep(600);
   console.log(await p.evaluate(() => [document.querySelector('.leaflet-container').getBoundingClientRect().toJSON(), document.querySelector('.leaflet-map-pane').style.transform, document.querySelector('.leaflet-overlay-pane svg').getAttribute('style'), document.querySelector('.me') && document.querySelector('.me').getBoundingClientRect().y]));
   console.log(await p.evaluate(() => [(document.querySelector('path.ghost') || { getBoundingClientRect: () => ({ toJSON: () => null }) }).getBoundingClientRect().toJSON(), document.querySelector('path.route').getBoundingClientRect().toJSON()]));
+  if (process.env.NIGHT) console.log('toasts', await p.evaluate(() => window.__toasts || []));
   if (process.env.LONG) await p.evaluate(() => { const t = document.getElementById('toast'); t.textContent = '📡 GPSの精度が低め（±62m）。​外の、​空が見える場所だと記録が始まるよ'; t.classList.add('show'); });
   if (process.env.RECTS) console.log(await p.evaluate(() => { const r = (e) => e && [Math.round(e.getBoundingClientRect().top), Math.round(e.getBoundingClientRect().bottom)]; const a = document.getElementById('areaTxt'), box = a && a.closest('div[class]').parentElement; const t = document.querySelector('.toast'); return { area: r(a.parentElement.parentElement), toast: r(t), cls: a.parentElement.parentElement.className, tcls: t && t.className }; }));
   if (process.env.IMGS) console.log(await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).map((i) => i.src.slice(0, 120) + ' ' + i.className)));
