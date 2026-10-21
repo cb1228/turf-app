@@ -12,7 +12,7 @@ const srv = http.createServer((q, w) => {
 }).listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}`, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true, userDataDir: require('os').tmpdir() + '/turf-shot-' + Date.now() });
-  const p = await br.newPage(); await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2 });
+  const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 });
   await p.evaluateOnNewDocument((st, big) => { window.__st = st; window.__big = big; }, process.env.STREAK || 0, !!process.env.BIG);
   await p.evaluateOnNewDocument(() => {
     const G = Geolocation.prototype; G.getCurrentPosition = function (ok) { ok && ok({ coords: { latitude: 35.6852, longitude: 139.7700, accuracy: 10 }, timestamp: Date.now() }); }; G.watchPosition = function () { return 1; };
@@ -26,6 +26,7 @@ const srv = http.createServer((q, w) => {
     return r.respond({ status: 200, contentType: 'text/plain', body: '' }); });
   await p.goto(base + '/turf.html', { waitUntil: 'domcontentloaded' }); await sleep(2500);
   await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
+  if (process.env.TODAYFIT) console.log('today', await p.evaluate(() => [...document.querySelectorAll('.today b,.today small')].map((e) => e.textContent + (e.scrollWidth > e.clientWidth ? ' ✗切れ' : ' ○'))));
   await p.screenshot({ path: path.join(OUT, 'sc_home.png') });
   const shots = [['sc_missions', "document.getElementById('btnMissions')"], ['sc_settings', "document.getElementById('btnSettings')"], ['sc_profile', "document.getElementById('rankCard')"]];
   for (const [name, sel] of shots) {
