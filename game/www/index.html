@@ -678,6 +678,9 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .float{animation:flt 2.4s ease-in-out infinite}
 @keyframes flt{50%{transform:translateY(-8px)}}
 #xpLeft.near{color:#b6ff3a;font-weight:900}
+.mchest.hint{animation:chint .8s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px #ffd23f) drop-shadow(0 0 4px #fff)}
+@keyframes chint{to{transform:translateY(-6px) scale(1.18)}} /* 知らせた宝箱を地図で見つけやすく */
+body.calm .mchest.hint{animation:none}
 </style>
 </head>
 <body>
@@ -1578,7 +1581,7 @@ function nearChests(lat,lng){
     if(dm<=CHEST_M) openChest(ch);
     // 歩いていて宝箱に近づいたら、方角と距離を1回だけ知らせる（気づかず通り過ぎないように）
     else if(walking&&dm<=120&&!chestHint[d+ch.k]&&Date.now()-chestHintT>60000){ chestHint[d+ch.k]=1; chestHintT=Date.now(); var bg=Math.atan2((ch.lng-lng)*Math.cos(lat*Math.PI/180),ch.lat-lat)*180/Math.PI, ar='↑↗→↘↓↙←↖'.charAt(((Math.round(bg/45)%8)+8)%8);
-      notify('🎁 '+ar+' '+fmtN(Math.round(dm/10)*10)+'m先に'+CHEST[ch.t].n); } }
+      notify('🎁 '+ar+' '+fmtN(Math.round(dm/10)*10)+'m先に'+CHEST[ch.t].n); var mk=chestMk[ch.k], el=mk&&mk.getElement&&mk.getElement(); el=el&&el.querySelector('.mchest'); if(el){ el.classList.add('hint'); setTimeout(function(){ el.classList.remove('hint'); },8000); } } }
 }
 var chestHint={}, chestHintT=0; // 知らせは1分に1回まで
 var chestQ=[];
