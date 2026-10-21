@@ -512,6 +512,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .prolist small{display:block;font-size:11.5px;font-weight:700;color:var(--mute);line-height:1.5}
 .btnPro{width:100%;height:58px;border-radius:19px;font-size:17px;font-weight:900;color:#2a1000;position:relative;overflow:hidden;
   background:linear-gradient(135deg,#fff3b0,#ffd23f 45%,#ff9d00);box-shadow:0 10px 30px rgba(255,190,40,.35),inset 0 1px 0 rgba(255,255,255,.7)}
+@media (max-height:760px){ #proModal #proBuy{position:sticky;bottom:6px;z-index:3;box-shadow:0 -14px 22px 6px rgba(22,18,34,.96)} } /* 背の低い画面では「購入」ボタンを札の下に固定（スクロールしなくても見える） */
 .btnPro::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%);transform:translateX(-100%);animation:pshine 2.8s ease-in-out infinite}
 @keyframes pshine{60%,100%{transform:translateX(100%)}}
 .btnPro:disabled{opacity:.55;filter:saturate(.6)}.btnPro:disabled::after{display:none}
