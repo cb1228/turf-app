@@ -1957,6 +1957,7 @@ function stopWalk(silent){
 var fixBuf=[], fastN=0, roughShown=false, roughAt=0;
 function onFix(p){
   var c=p.coords, acc=c.accuracy||15;
+  if(gpsLostAt){ if(walking&&Date.now()-gpsLostAt>8000) notify('📡 GPSがつながった。続きから塗れるよ'); gpsLostAt=0; }
   // 精度が低い（家の中など）: 道には使わないが、地図はおおよその現在地へ動かし、理由を伝える
   if(acc>45){
     if(!lastFix&&!roughShown){ roughShown=true; $('#hereHint').hidden=true; me.setLatLng([c.latitude,c.longitude]); me.setOpacity(.5); map.setView([c.latitude,c.longitude],16,{animate:true}); detectMuni(c.latitude,c.longitude); }
@@ -1984,8 +1985,9 @@ function cutPath(){
 }
 function onErr(e){
   if(e.code===1){ stopWalk(true); showGeoHelp(); }
-  else notify('GPSを探しています…空が見える場所へ');
+  else { var nw=Date.now(); if(!gpsLostAt) gpsLostAt=nw; if(nw-gpsLostMsg>25000){ gpsLostMsg=nw; notify('GPSを探しています…空が見える場所へ'); } }
 }
+var gpsLostAt=0, gpsLostMsg=0;
 
 /* ---------- sheets & modals ---------- */
 var openSheet=null;
