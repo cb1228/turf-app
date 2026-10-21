@@ -14,8 +14,8 @@ const srv = http.createServer((q, w) => {
 }).listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}`;
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true });
-  const p = await br.newPage(); await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2 });
-  await p.evaluateOnNewDocument(() => { localStorage.setItem('turf_v3', JSON.stringify({ onb: true, tut: { walk: 1, loop: 1, chest: 1, rank: 1, mission: 1 }, n: [5, 2], av: 0, ac: 4, xp: 900, newsSeen: '9.9.9' })); });
+  const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 }); await p.evaluateOnNewDocument((b) => { window.__big = b; }, !!process.env.BIG);
+  await p.evaluateOnNewDocument(() => { localStorage.setItem('turf_v3', JSON.stringify({ onb: true, tut: { walk: 1, loop: 1, chest: 1, rank: 1, mission: 1 }, n: [5, 2], av: 0, ac: 4, xp: 900, newsSeen: '9.9.9', big: !!window.__big })); });
   await p.setRequestInterception(true);
   p.on('request', (r) => { const u = r.url();
     if (u.includes('/api/rank')) return r.respond({ status: 200, contentType: 'application/json', body: JSON.stringify(RANK) });
