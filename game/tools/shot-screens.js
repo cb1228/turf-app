@@ -34,8 +34,15 @@ const srv = http.createServer((q, w) => {
   for (const [name, sel] of shots) {
     await p.evaluate((s) => { const e = eval(s); if (e) e.click(); }, sel); await sleep(900);
     await cut(name);
+    if (process.env.SHEETTEXT) console.log('text', name, await p.evaluate(() => { const sh = document.querySelector('.sheet.show'); return sh ? sh.innerText.split(String.fromCharCode(10)).map((t) => t.trim()).filter(Boolean).join(' | ').slice(0, 2500) : ''; }));
     await p.screenshot({ path: path.join(OUT, name + '.png') });
     await p.evaluate(() => { if (window.closeSheet) closeSheet(); document.querySelectorAll('.sheet.show').forEach((m) => m.classList.remove('show')); document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); }); await sleep(500);
+  }
+  if (process.env.NAMEROW) { // 設定の「名前・アイコン」から名前の変更が開くか
+    await p.evaluate(() => document.getElementById('btnSettings').click()); await sleep(900);
+    await p.evaluate(() => document.getElementById('sName').click()); await sleep(2200);
+    console.log('namerow', await p.evaluate(() => ({ rank: !!document.querySelector('#shRank.show'), pick: !document.getElementById('namePick').hidden })));
+    await p.screenshot({ path: path.join(OUT, 'sc_namerow.png') });
   }
   await br.close(); srv.close();
 });

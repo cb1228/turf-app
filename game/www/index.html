@@ -2250,9 +2250,10 @@ function renderSettings(){
     +(!nativeP()&&isIOS()&&appStoreURL()?'<a class="row prorow" href='+appStoreURL()+' target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>iPhoneアプリ版をダウンロード</b><small>画面を消してポケットに入れたままでも記録できる・無料</small></div><span class="chev">›</span></a>':'')
     +(nativeP()?'':'<button class="row" id="sWake"><div class="l"><b>歩いている間は画面を消さない</b><small>Web版は画面が消えるとGPSが止まり、道が記録されません（アプリ版は画面を消してもOK）</small></div><span class="sw2'+(S.noWake?'':' on')+'"></span></button>')
     +'<button class="row" id="sHap"><div class="l"><b>触覚フィードバック</b><small>領地GETやレベルアップでブルッと震える</small></div><span class="sw2'+(S.hap?' on':'')+'"></span></button>'
-    +'<div class="row"><div class="l"><b>位置情報とプライバシー</b><small>歩いた道と領地はこの端末の中だけに保存されます。地元ランキングのため、約1km単位にぼかした位置から市区町村を調べます（国土地理院の無料サービス）。ランキングには面積・マス数・レベル・市区町村と、自動生成の名前だけが送られます。アカウント登録は不要です。</small></div></div>'
+    +'<div class="row"><div class="l"><b>位置情報とプライバシー</b><small>歩いた道と領地はこの端末の中だけに保存されます。地元ランキングのため、約1km単位にぼかした位置から市区町村を調べます（国土地理院の無料サービス）。ランキングには面積・マス数・レベル・市区町村と、名前（自動の組み合わせか自分で書いた名前）・アイコンだけが送られます。アカウント登録は不要です。</small></div></div>'
     +(lnP()?'<button class="row" id="sNtf"><div class="l"><b>お知らせ</b><small>歩き忘れた日の夜7時に1回・月曜の朝に今週の目標</small></div><span class="sw2'+(S.ntf?' on':'')+'"></span></button>':'')
     +(canSuggestInstall()?'<button class="row" id="sInst"><div class="l"><b>ホーム画面に追加（Web版）</b><small>記録が消えにくくなり、アプリのように全画面で遊べる</small></div><span class="chev">›</span></button>':'')
+    +'<button class="row" id="sName"><div class="l"><b>名前・アイコン</b><small>ランキングに出る名前：'+esc(myName())+'</small></div><span class="chev">›</span></button>'
     +'<button class="row" id="sXfer"><div class="l"><b>機種変更の引き継ぎ</b><small>コードを発行して、新しい端末でそのまま続ける</small></div><span class="chev">›</span></button>'
     +'<a class="row" href="https://auto-revenue-agent.himosho22.workers.dev/turf-support" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>サポート・お問い合わせ</b><small>よくある質問・不具合の報告</small></div><span class="chev">›</span></a>'
     +'<a class="row" href="https://auto-revenue-agent.himosho22.workers.dev/turf-privacy" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>プライバシーポリシー</b><small>集めるデータ・送り先・消し方</small></div><span class="chev">›</span></a>'
@@ -2268,6 +2269,8 @@ function renderSettings(){
       S.staff=on; save(); notify(on?'運営者の端末にしたよ（運営ページの人数に数えない）':'運営者の印を外したよ'); renderSettings(); })
     .catch(function(){ notify('つながらなかった。もう一度ためしてね'); }); };
   $('#sXfer').onclick=function(){ closeSheet(); openXfer(); };
+  // 名前・アイコンの変更は、ランキングの「自分」の欄から開く
+  $('#sName').onclick=function(){ showSheet('#shRank'); var n=0, go=function(){ var r=$('#reroll'); if(r&&$('#namePick').hidden) r.click(); else if(!r&&++n<20) setTimeout(go,250); }; setTimeout(go,400); };
   $('#sPro').onclick=function(){ closeSheet(); openPro(); }; if(!proOn()) $('#sPro').remove();
   $('#sDemo').onclick=openDemo;
   if($('#sNtf')) $('#sNtf').onclick=function(){ enableNotif(!S.ntf).then(renderSettings); };
