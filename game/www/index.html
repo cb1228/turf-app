@@ -538,6 +538,23 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 @keyframes dblink{50%{opacity:.25}}
 .demobar button{padding:9px 14px;border-radius:999px;font-size:12.5px;font-weight:900;color:#0a2012;background:linear-gradient(135deg,#dcff6e,#8dff1f)}
 .onbdemo{display:block;width:100%;margin-top:8px;padding:8px;font-size:13px;font-weight:900;color:rgba(255,255,255,.72)}
+.mcard.wnc{text-align:left;padding:22px 18px 18px}
+.wn-top{display:flex;align-items:center;gap:8px}
+.wn-pill{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:#0a2012;background:var(--lime);padding:3px 9px;border-radius:999px}
+.wn-ver{font-size:12px;font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums}
+.wn-h{margin:8px 0 12px;font-size:22px;font-weight:900;letter-spacing:.01em;color:#fff}
+.wn-hero{position:relative;display:flex;gap:14px;align-items:center;padding:16px 14px;border-radius:20px;overflow:hidden;
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--c) 34%,transparent),transparent 60%),linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.wn-hi{flex:none;width:56px;height:56px;border-radius:17px;display:grid;place-items:center;font-size:30px;background:color-mix(in srgb,var(--c) 22%,#16121f);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 50%,transparent),0 8px 22px color-mix(in srgb,var(--c) 30%,transparent)}
+.wn-ht{min-width:0}.wn-ht b{display:block;font-size:16px;font-weight:900;color:#fff}.wn-ht span{display:block;margin-top:3px;font-size:12.5px;font-weight:700;line-height:1.5;color:rgba(255,255,255,.72);word-break:keep-all;overflow-wrap:anywhere}
+.wn-hero em{display:inline-block;margin-bottom:4px;font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.12em;color:#0a2012;background:var(--c);padding:2px 7px;border-radius:999px}
+.wn-list{display:flex;flex-direction:column;margin:10px 0 16px}
+.wn-row{display:flex;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(255,255,255,.07)}
+.wn-row:last-child{border-bottom:0}
+.wn-row i{font-style:normal;flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:color-mix(in srgb,var(--c) 18%,#16121f);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 38%,transparent)}
+.wn-row span{min-width:0}.wn-row b{display:block;font-size:14px;font-weight:900;color:#fff}.wn-row small{display:block;margin-top:2px;font-size:11.5px;font-weight:700;line-height:1.45;color:var(--mute);word-break:keep-all;overflow-wrap:anywhere}
+@media (max-width:360px){ .wn-hero{gap:10px;padding:12px 10px} .wn-hi{width:44px;height:44px;font-size:24px;border-radius:14px} .wn-ht b{font-size:14.5px;white-space:nowrap} .wn-ht span{font-size:11.5px} }
+@media (max-height:600px){ #newsOk{position:sticky;bottom:4px;z-index:3;box-shadow:0 -14px 22px 6px rgba(22,18,34,.96),0 10px 30px rgba(141,255,31,.3)} .mcard.wnc{padding:16px 14px 14px} .wn-h{font-size:19px;margin:6px 0 10px} .wn-hero{padding:12px} .wn-hi{width:46px;height:46px;font-size:25px} .wn-row{padding:7px 2px} .wn-row i{width:34px;height:34px;font-size:17px} }
 .gsteps{position:relative;margin:4px 0 14px;display:flex;flex-direction:column;gap:8px}
 .gsteps div{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);font-size:13px;font-weight:800;line-height:1.55}
 .gsteps i{font-style:normal;flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;color:#0a2012;background:var(--lime)}
@@ -789,10 +806,11 @@ body.calm .mchest.hint{animation:none}
   <div class="unl" id="rcNext"></div>
   <button class="btnP" id="rcOk">今週も出陣！</button>
 </div></div>
-<div class="modal" id="newsModal"><div class="mcard instc"><div class="rayw"><div class="rays"></div></div>
-  <div class="lvk">アップデート</div>
-  <div class="lvt" style="margin-top:4px;text-align:center" id="newsVer"></div>
-  <div class="gsteps" id="newsList" style="margin-top:12px"></div>
+<div class="modal" id="newsModal"><div class="mcard wnc">
+  <div class="wn-top"><span class="wn-pill">UPDATE</span><span class="wn-ver" id="newsVer"></span></div>
+  <h2 class="wn-h">新しくなったこと</h2>
+  <div id="newsHero"></div>
+  <div class="wn-list" id="newsList"></div>
   <button class="btnP" id="newsOk">さっそく出陣！</button>
 </div></div>
 <div class="modal" id="instModal"><div class="mcard instc">
@@ -2240,7 +2258,7 @@ function renderSettings(){
     +'<a class="row" href="https://auto-revenue-agent.himosho22.workers.dev/turf-privacy" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>プライバシーポリシー</b><small>集めるデータ・送り先・消し方</small></div><span class="chev">›</span></a>'
     +'<a class="row" href="https://auto-revenue-agent.himosho22.workers.dev/turf-terms" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>利用規約・安全に遊ぶために</b><small>歩きスマホ・立入禁止・交通ルール</small></div><span class="chev">›</span></a>'
     +'<button class="row danger" id="sReset"><div class="l"><b>データをすべて消す</b><small>領地・レベル・実績と、サーバー上のランキング記録・招待コード・友だち関係がすべて消えます</small></div><span class="chev">›</span></button>'
-    +'<div class="foot" id="setFoot">TURF v1.0.4 ・ 地図 © Esri'+(S.staff?' ・ 運営者の端末':'')+'</div>';
+    +'<div class="foot" id="setFoot">TURF v'+APPV+' ・ 地図 © Esri'+(S.staff?' ・ 運営者の端末':'')+'</div>';
   $('#setBody').innerHTML=h;
   // 版の表示を7回続けてタップ → 運営者の端末として、運営ページの集計から外す（もう一度で戻す）
   var ft=$('#setFoot'), tn=0, tt=0;
@@ -2273,21 +2291,21 @@ function renderSettings(){
 }
 
 /* ---------- アップデートのお知らせ（前から遊んでいる人に、新しい版で初めて開いた時だけ1回） ---------- */
-var APPV='1.0.4', NEWS=[
-  ['🟩','<b>戻れば領地になる形</b>：歩いている途中に、取れる範囲がうっすら見える'],
-  ['🗺','<b>領地マップ</b>：地図の右のボタンで、塗った所をまとめて見る'],
-  ['📊','<b>県ごとの制圧率</b>：県の面積の何%を取ったかが戦績に'],
-  ['🎁','<b>「今日」バー</b>：近くの宝箱とミッションがひと目でわかる'],
-  ['🎯','<b>おしい！</b>：あと何mで何マス取れたかを教えてくれる'],
-  ['🌈','<b>Proパック</b>（アプリ版）：限定スキン・金縁カードなど']];
+var APPV='1.0.5', NEWS=[ // [絵, 題, ひとこと, 色]。いちばん上は大きく見せる
+  ['📍','市区町村ごとの制圧率','江戸川区の何%を取ったかが、戦績と出陣の記録に','#8dff1f'],
+  ['✍️','自分の名前ではじめる','ランキングに出る名前を最初に決められる','#22d3ee'],
+  ['🎁','宝箱のありか','近づくと方角と距離を教えてくれる','#ffd23f'],
+  ['🎯','あと少しの知らせ','ミッション達成の目前で教えてくれる','#ff5a95'],
+  ['📡','GPSが戻ったら知らせる','電波が切れても、つながったら続きから']];
 function checkNews(){
   if(SHOT||mode!=='real') return;
   if(!S.onb||!S.loops){ if(S.newsV!==APPV){ S.newsV=APPV; save(); } return; } // はじめての人には出さない
   if(S.newsV===APPV) return;
   if(document.querySelector('.modal.show')){ setTimeout(checkNews,8000); return; }
   S.newsV=APPV; save();
-  $('#newsVer').textContent='TURF v'+APPV+' の新しいこと';
-  $('#newsList').innerHTML=NEWS.map(function(n){ return '<div><i style="background:none;width:auto;height:auto;font-size:18px">'+n[0]+'</i><span>'+n[1]+'</span></div>'; }).join('');
+  $('#newsVer').textContent='v'+APPV;
+  var h=NEWS[0]; $('#newsHero').innerHTML='<div class="wn-hero" style="--c:'+h[3]+'"><div class="wn-hi">'+h[0]+'</div><div class="wn-ht"><em>NEW</em><b>'+h[1]+'</b><span>'+h[2]+'</span></div></div>';
+  $('#newsList').innerHTML=NEWS.slice(1).map(function(n){ return '<div class="wn-row"><i style="--c:'+(n[3]||'#8b5cf6')+'">'+n[0]+'</i><span><b>'+n[1]+'</b><small>'+n[2]+'</small></span></div>'; }).join('');
   openModal('#newsModal'); haptic('light');
 }
 $('#newsOk').addEventListener('click',function(){ closeModal('#newsModal'); });

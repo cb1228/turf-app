@@ -17,7 +17,7 @@ const srv = http.createServer((q, w) => {
 }).listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}`, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true, userDataDir: require('os').tmpdir() + '/turf-shot-' + Date.now() });
-  const p = await br.newPage(); await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2 });
+  const p = await br.newPage(); await p.setViewport({ width: +(process.env.W || 375), height: +(process.env.H || 667), deviceScaleFactor: 2 });
   await p.evaluateOnNewDocument((st) => { localStorage.setItem('turf_v3', st); }, JSON.stringify({ onb: true, tut: { walk: 1, loop: 1, chest: 1, rank: 1, mission: 1 }, n: [5, 2], av: 2, xp: 2400, loops: 4, c: cells, cq, newsSeen: '9.9.9' }));
   p.on('pageerror', (e) => console.log('ERR', e.message)); p.on('requestfailed', (r) => console.log('FAIL', r.url().slice(0, 90)));
   p.on('request', (r) => { if (r.url().includes('gsi')) console.log('REQ', r.url().slice(0, 120)); });
@@ -30,6 +30,7 @@ const srv = http.createServer((q, w) => {
     if (u.startsWith(base)) return r.continue();
     return r.respond({ status: 200, contentType: 'text/plain', body: '' }); });
   await p.goto(base + '/turf.html', { waitUntil: 'domcontentloaded' }); await sleep(2000);
+  if (process.env.NEWS) { await sleep(9000); await p.screenshot({ path: path.join(OUT, 'news.png') }); console.log('news', await p.evaluate(() => { const c = document.querySelector('#newsModal .mcard'); return document.getElementById('newsModal').classList.contains('show') && { sh: c.scrollHeight, ch: c.clientHeight }; })); }
   await p.evaluate(() => { document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); document.getElementById('rankCard').click(); }); await sleep(1500);
   await p.evaluate(() => { const e = document.querySelector('#jpOpen'); if (e) e.scrollIntoView({ block: 'start' }); }); await sleep(600);
   const names = await p.evaluate(() => [...document.querySelectorAll('.place .pn')].map((e) => e.textContent));
