@@ -319,7 +319,9 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   background:radial-gradient(circle at 35% 30%,#fff6c8,#ffd23f 45%,#c98a00);box-shadow:0 6px 18px rgba(255,210,63,.35),inset 0 -3px 0 rgba(0,0,0,.2)}
 .ach b{display:block;font-size:12px;font-weight:900}
 .ach small{display:block;font-size:9.5px;font-weight:700;color:var(--mute);margin-top:2px;line-height:1.35}
-.ach.lock .md{background:rgba(255,255,255,.07);box-shadow:none;filter:grayscale(1);opacity:.45}
+.ach .md{position:relative}
+.ach.lock .md{background:rgba(255,255,255,.07);box-shadow:none;color:transparent;text-shadow:0 0 0 rgba(255,255,255,.28)} /* 取っていない実績も絵の形だけ見せる（何がもらえるか分かるように） */
+.ach.lock .md em{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;color:#fff;text-shadow:none;background:#2a2533;border:1px solid rgba(255,255,255,.18)}
 .ach.lock b{color:rgba(255,255,255,.5)}
 .skins{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .skin{padding:12px 4px 10px;border-radius:20px;text-align:center;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);font-size:11px;font-weight:900}
@@ -2239,7 +2241,7 @@ function renderProfile(){
   var near=ACH.filter(function(a){ return S.ach.indexOf(a.id)<0&&ACHP[a.id]; }).map(function(a){ var q=ACHP[a.id](); return {a:a,v:q[0],g:q[1],u:q[2]||'',r:q[0]/q[1]}; }).filter(function(x){ return x.r>0&&x.r<1; }).sort(function(x,y){ return y.r-x.r; }).slice(0,3);
   if(near.length) h+='<div class="sec">次に取れそうな実績</div><div class="achnx">'+near.map(function(x){ var rem=x.g-x.v; return '<div><span class="md">'+x.a.i+'</span><span class="t"><b>'+x.a.n+'</b><small>あと'+(x.u==='m'?fmtDist(Math.ceil(rem)):fmtN(Math.ceil(rem))+x.u)+'</small><i class="pbar"><i style="width:'+Math.round(x.r*100)+'%"></i></i></span></div>'; }).join('')+'</div>';
   h+='<div class="sec">実績 '+S.ach.length+' / '+ACH.length+'</div><div class="achs">'+ACH.map(function(a){ var ok=S.ach.indexOf(a.id)>=0;
-    return '<div class="ach'+(ok?'':' lock')+'"><div class="md">'+(ok?a.i:'🔒')+'</div><b>'+a.n+'</b><small>'+a.d+'</small></div>'; }).join('')+'</div>';
+    return '<div class="ach'+(ok?'':' lock')+'"><div class="md">'+a.i+(ok?'':'<em>🔒</em>')+'</div><b>'+a.n+'</b><small>'+a.d+'</small></div>'; }).join('')+'</div>';
   h+='<div class="sec">シーズンの称号</div>'+((S.badges&&S.badges.length)?'<div class="sbadges">'+S.badges.map(function(x){return '<span class="sbadge">'+x.i+' '+esc(x.t)+'</span>';}).join('')+'</div>':'<div class="shint">毎月の「今月」ランキングで、全国3位以内・地元1位・上位10%に入ると称号がもらえるよ</div>');
   h+='<div class="sec">領地スキン</div><div class="skins">'+SKINS.filter(function(s){ return !s.pro||proOn(); }).map(function(s){ var ok=s.pro?!!S.pro:s.chest?!!S.ember:L>=s.lv, sel=S.skin===s.id;
     var bg=s.bg||'linear-gradient(135deg,'+s.s+','+s.f+')';
