@@ -318,7 +318,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .ach .md{width:54px;height:54px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:26px;
   background:radial-gradient(circle at 35% 30%,#fff6c8,#ffd23f 45%,#c98a00);box-shadow:0 6px 18px rgba(255,210,63,.35),inset 0 -3px 0 rgba(0,0,0,.2)}
 .ach b{display:block;font-size:12px;font-weight:900}
-.ach small{display:block;font-size:9.5px;font-weight:700;color:var(--mute);margin-top:2px;line-height:1.35}
+.ach small{display:block;font-size:10.5px;font-weight:700;color:var(--mute);margin-top:2px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
 .ach .md{position:relative}
 .ach.lock .md{background:rgba(255,255,255,.07);box-shadow:none;color:transparent;text-shadow:0 0 0 rgba(255,255,255,.28)} /* 取っていない実績も絵の形だけ見せる（何がもらえるか分かるように） */
 .ach.lock .md em{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;color:#fff;text-shadow:none;background:#2a2533;border:1px solid rgba(255,255,255,.18)}
@@ -329,7 +329,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .skin.sel{border-color:var(--lime);background:rgba(182,255,58,.08)}
 .skin.lock{color:rgba(255,255,255,.45)}
 .skin.lock .sw{filter:grayscale(.85) brightness(.55);box-shadow:none}
-.skin small{display:block;font-size:9.5px;font-weight:800;color:var(--mute);margin-top:1px}
+.skin small{display:block;font-size:10.5px;font-weight:800;color:var(--mute);margin-top:1px}
 
 .row{display:flex;align-items:center;gap:12px;padding:15px 16px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);margin-bottom:10px;width:100%;text-align:left}
 .row .l{flex:1}
@@ -1026,10 +1026,10 @@ var WGROUPS=[['wk5','wk10'],['wc300','wc800'],['wg5','wt8','wd4','wl8','wm2']], 
 var ACH=[
   {id:'first',i:'🚩',n:'初陣',d:'はじめて囲んだ',f:function(){return S.loops>=1;}},
   {id:'c100',i:'🟩',n:'百マス',d:'領地100マス',f:function(){return claimed.size>=100;}},
-  {id:'dome',i:'🏟️',n:'ドーム級',d:'東京ドーム1個分',f:function(){return areaOf(claimed)>=46755;}},
+  {id:'dome',i:'🏟️',n:'ドーム級',d:'東京ドーム 1個分',f:function(){return areaOf(claimed)>=46755;}},
   {id:'big200',i:'💥',n:'大包囲',d:'1回で200マス',f:function(){return S.best>=200;}},
   {id:'c1000',i:'🏯',n:'千マスの城',d:'領地1000マス',f:function(){return claimed.size>=1000;}},
-  {id:'land',i:'🎡',n:'夢の国',d:'ディズニーランド級',f:function(){return areaOf(claimed)>=510000;}},
+  {id:'land',i:'🎡',n:'夢の国',d:'東京ドーム 約11個分',f:function(){return areaOf(claimed)>=510000;}},
   {id:'km1',i:'👟',n:'はじめの一歩',d:'累計1km',f:function(){return S.d>=1000;}},
   {id:'km10',i:'🥾',n:'健脚',d:'累計10km',f:function(){return S.d>=10000;}},
   {id:'km42',i:'🏃',n:'フルマラソン',d:'累計42.195km',f:function(){return S.d>=42195;}},
