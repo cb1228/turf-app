@@ -2241,12 +2241,16 @@ function renderProfile(){
   var near=ACH.filter(function(a){ return S.ach.indexOf(a.id)<0&&ACHP[a.id]; }).map(function(a){ var q=ACHP[a.id](); return {a:a,v:q[0],g:q[1],u:q[2]||'',r:q[0]/q[1]}; }).filter(function(x){ return x.r>0&&x.r<1; }).sort(function(x,y){ return y.r-x.r; }).slice(0,3);
   if(near.length) h+='<div class="sec">次に取れそうな実績</div><div class="achnx">'+near.map(function(x){ var rem=x.g-x.v; return '<div><span class="md">'+x.a.i+'</span><span class="t"><b>'+x.a.n+'</b><small>あと'+(x.u==='m'?fmtDist(Math.ceil(rem)):fmtN(Math.ceil(rem))+x.u)+'</small><i class="pbar"><i style="width:'+Math.round(x.r*100)+'%"></i></i></span></div>'; }).join('')+'</div>';
   h+='<div class="sec">実績 '+S.ach.length+' / '+ACH.length+'</div><div class="achs">'+ACH.map(function(a){ var ok=S.ach.indexOf(a.id)>=0;
-    return '<div class="ach'+(ok?'':' lock')+'"><div class="md">'+a.i+(ok?'':'<em>🔒</em>')+'</div><b>'+a.n+'</b><small>'+a.d+'</small></div>'; }).join('')+'</div>';
+    return '<div class="ach'+(ok?'':' lock')+'" role="button" tabindex="0" data-ach="'+a.id+'"><div class="md">'+a.i+(ok?'':'<em>🔒</em>')+'</div><b>'+a.n+'</b><small>'+a.d+'</small></div>'; }).join('')+'</div>';
   h+='<div class="sec">シーズンの称号</div>'+((S.badges&&S.badges.length)?'<div class="sbadges">'+S.badges.map(function(x){return '<span class="sbadge">'+x.i+' '+esc(x.t)+'</span>';}).join('')+'</div>':'<div class="shint">毎月の「今月」ランキングで、全国3位以内・地元1位・上位10%に入ると称号がもらえるよ</div>');
   h+='<div class="sec">領地スキン</div><div class="skins">'+SKINS.filter(function(s){ return !s.pro||proOn(); }).map(function(s){ var ok=s.pro?!!S.pro:s.chest?!!S.ember:L>=s.lv, sel=S.skin===s.id;
     var bg=s.bg||'linear-gradient(135deg,'+s.s+','+s.f+')';
     return '<button class="skin'+(sel?' sel':'')+(ok?'':' lock')+'" data-skin="'+s.id+'" style="--c:'+s.f+'"><div class="sw" style="background:'+bg+'"></div>'+s.n+'<small>'+(s.pro&&!ok?'PRO':ok?(sel?'使用中':'えらぶ'):s.chest?'金の宝箱から':'Lv.'+s.lv+'で解放')+'</small></button>'; }).join('')+'</div>';
   $('#profBody').innerHTML=h;
+  // 実績をタップ：取っていなければ「あと◯」、取っていれば説明
+  [].forEach.call(document.querySelectorAll('#profBody .ach[data-ach]'),function(el){ el.onclick=function(){ var id=el.getAttribute('data-ach'), a=ACH.filter(function(x){return x.id===id;})[0]; if(!a) return;
+    if(S.ach.indexOf(id)>=0){ notify(a.i+' 「'+a.n+'」取得ずみ：'+a.d); return; }
+    var q=ACHP[id]&&ACHP[id](); notify('🔒 「'+a.n+'」'+a.d+(q&&q[0]<q[1]?'（あと'+(q[2]==='m'?fmtDist(Math.ceil(q[1]-q[0])):fmtN(Math.ceil(q[1]-q[0]))+(q[2]||''))+'）':'')); haptic('light'); }; });
   $('#pShare').addEventListener('click',shareCard); bindPlaces();
   Array.prototype.forEach.call(document.querySelectorAll('[data-skin]'),function(b){ b.addEventListener('click',function(){
     var s=SKINS.filter(function(x){return x.id===b.dataset.skin;})[0];
