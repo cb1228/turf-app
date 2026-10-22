@@ -746,7 +746,7 @@ body.calm .mchest.hint{animation:none}
 
 <button class="fogbtn glass" id="btnFog" type="button" aria-label="領地マップ（これまで取った領地を全部見る）" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></button>
 <div class="fogbar glass" id="fogBar" hidden><b>領地マップ</b><span id="fogTxt"></span><button type="button" id="fogClose" aria-label="領地マップを閉じる">×</button></div>
-<button class="rival glass" id="rival"></button>
+<button class="rival glass" id="rival" aria-hidden="true" tabindex="-1"></button>
 <div class="herehint glass" id="hereHint" hidden>📍 まだ現在地がわからないよ<br><b>「出陣する」</b>で、いまいる場所の地図になる</div>
 <div class="today" id="today" hidden><button class="glass" id="tdChest" type="button" aria-label="近くの宝箱を地図で見る"></button><button class="glass" id="tdMis" type="button" aria-label="今日のミッションを見る"></button></div>
 <nav class="dock">
@@ -1178,14 +1178,16 @@ function loadRival(){
 }
 function renderRival(){
   var el=$('#rival'); if(!el) return;
-  if(!RV||mode!=='real'||SHOT){ el.classList.remove('show'); return; }
+  var hide=function(){ el.classList.remove('show'); el.setAttribute('aria-hidden','true'); el.tabIndex=-1; }; // 見えていない間は読み上げ・フォーカスの対象にしない
+  if(!RV||mode!=='real'||SHOT){ hide(); return; }
   var v=RV.v+Math.max(0,claimed.size-RV.at), h, cls='';
   if(RV.rank>1&&RV.up){ var gap=RV.up.v-v+1;
     if(gap<=0){ h='<em>🔥</em><span>'+esc(RV.label)+' '+(RV.rank-1)+'位の「'+esc(RV.up.name)+'」を<b>抜いた！</b></span>'; cls='hot'; submitScore(); }
     else { h='<em>🎯</em><span>'+esc(RV.label)+' <b>'+(RV.rank-1)+'位</b>まで あと<b>'+fmtN(gap)+'</b>マス</span>'; if(gap<=30) cls='hot'; } }
   else if(RV.rank===1&&RV.second!==null){ h='<em>👑</em><span>'+esc(RV.label)+' 1位！ 2位と <b>+'+fmtN(v-RV.second)+'</b>マス差</span>'; cls='lead'; }
   else if(RV.rank===1){ h='<em>👑</em><span>'+esc(RV.label)+' 1位 ・ <b>ライバルを誘おう</b></span>'; cls='lead'; }
-  else { el.classList.remove('show'); return; }
+  else { hide(); return; }
+  el.removeAttribute('aria-hidden'); el.tabIndex=0; el.innerHTML=h; el.setAttribute('aria-label',el.textContent+'（ランキングを開く）');
   var was=el.classList.contains('show'); el.className='rival glass'+(cls?' '+cls:'')+(was?' show':''); el.innerHTML=h; if(!was) el.classList.add('show');
 }
 $('#rival').addEventListener('click',function(){ if(!RV) return; rkKind=(RV.rank===1&&RV.second===null)?'friends':(S.muni?'local':'week'); showSheet('#shRank'); });
