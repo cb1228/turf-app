@@ -351,7 +351,7 @@ function serve() { return new Promise((res) => { const s = http.createServer((q,
     check('アプリ版の案内でエラーなし', errs.length + plain.errs.length === 0, errs.concat(plain.errs)); await ctx.close(); await plain.ctx.close(); }
   // 4u. アップデートのお知らせ（前から遊んでいる人に1回だけ。はじめての人には出さない）
   { const { p, ctx, errs } = await open('', Object.assign({ loops: 5, xp: 900 }, DONE)); await sleep(5600);
-    const a = await p.evaluate(() => ({ show: document.getElementById('newsModal').classList.contains('show'), n: document.querySelectorAll('#newsList > div').length }));
+    const a = await p.evaluate(() => ({ show: document.getElementById('newsModal').classList.contains('show'), n: document.querySelectorAll('#newsList > div, #newsHero > div').length }));
     await p.reload({ waitUntil: 'domcontentloaded' }); await sleep(6000);
     const again = await p.evaluate(() => document.getElementById('newsModal').classList.contains('show'));
     const B = await open('', DONE); await sleep(6000); const fresh = await B.p.evaluate(() => document.getElementById('newsModal').classList.contains('show'));
