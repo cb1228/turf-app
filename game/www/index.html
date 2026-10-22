@@ -699,6 +699,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .mchest.hint{animation:chint .8s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px #ffd23f) drop-shadow(0 0 4px #fff)}
 @keyframes chint{to{transform:translateY(-6px) scale(1.18)}} /* 知らせた宝箱を地図で見つけやすく */
 body.calm .mchest.hint{animation:none}
+.mis .m .mh{display:block;margin:2px 0 4px;font-size:10.5px;font-weight:700;line-height:1.4;color:var(--mute)} /* 満月の陣の条件 */
 </style>
 </head>
 <body>
@@ -1029,7 +1030,7 @@ var ACH=[
   {id:'chest10',i:'🎁',n:'宝探し',d:'宝箱を10個',f:function(){return (S.chests||0)>=10;}},
   {id:'goldbox',i:'💰',n:'一攫千金',d:'金の宝箱をあけた',f:function(){return (S.goldChests||0)>=1;}},
   {id:'gold10',i:'✨',n:'金脈',d:'金マス10個',f:function(){return (S.gold||0)>=10;}},
-  {id:'moon',i:'🌕',n:'満月の陣',d:'まんまるに囲んだ',f:function(){return (S.moon||0)>=1;}},
+  {id:'moon',i:'🌕',n:'満月の陣',d:'円に近い形で囲んだ',f:function(){return (S.moon||0)>=1;}},
   {id:'combo3',i:'⚡',n:'怒涛の三連',d:'3コンボ',f:function(){return (S.maxCombo||0)>=3;}},
   {id:'night',i:'🌙',n:'夜襲成功',d:'夜襲タイムに囲んだ',f:function(){return (S.night||0)>=1;}},
   {id:'week1',i:'🏆',n:'週間制覇',d:'今週の目標を全部達成',f:function(){return (S.weekClears||0)>=1;}},
@@ -2106,14 +2107,14 @@ function renderMissions(){
   var canSw=S.pro&&!(S.mswap&&S.mswap.day===dayKey());
   var h=todaysMissions().map(function(m,gi){ var v=Math.min(m.goal,t[m.key]||0), ok=done.indexOf(m.id)>=0||v>=m.goal;
     var vs=m.u==='m'?fmtDist(v)+' / '+fmtDist(m.goal):fmtN(v)+' / '+fmtN(m.goal)+m.u;
-    return '<div class="mis'+(ok?' done':'')+'"><div class="ic">'+(ok?'✓':m.i)+'</div><div class="m"><b>'+m.t+'</b><div class="pbar"><i style="width:'+(v/m.goal*100)+'%"></i></div><div class="p">'+vs+'</div></div><div class="rw">'+(ok?'達成！':'+'+m.xp+'XP')+'</div>'+(canSw&&!ok?'<button class="swap" data-swap="'+gi+'" aria-label="お題を入れ替える">🔄</button>':'')+'</div>'; }).join('');
+    return '<div class="mis'+(ok?' done':'')+'"><div class="ic">'+(ok?'✓':m.i)+'</div><div class="m"><b>'+m.t+'</b>'+(m.key==='moon'&&!ok?'<small class="mh">円に近い形で囲むと成功。細長いとダメ</small>':'')+'<div class="pbar"><i style="width:'+(v/m.goal*100)+'%"></i></div><div class="p">'+vs+'</div></div><div class="rw">'+(ok?'達成！':'+'+m.xp+'XP')+'</div>'+(canSw&&!ok?'<button class="swap" data-swap="'+gi+'" aria-label="お題を入れ替える">🔄</button>':'')+'</div>'; }).join('');
   var all=done.length>=3;
   if(!all&&!S.pro&&mode==='real'&&!SHOT&&proOn()) h+='<button class="proup" id="misPro">🔄 <span>気分じゃないお題は <b>Proパック</b> で1日1回入れ替えられる</span></button>';
   else if(S.pro&&!all) h+='<div class="foot" style="margin-top:4px">'+(canSw?'🔄 を押すと、お題を1つ入れ替えられるよ（1日1回）':'今日の入れ替えは使ったよ')+'</div>';
   var ws=weekStats(), wdone=(S.wd&&S.wd[weekKeyL()])||[], wms=weekMissions(), nd=0, left=7-((new Date().getDay()+6)%7);
   var wh='<div class="wkhd"><b>今週の目標</b><span>あと'+left+'日・毎週月曜リセット</span></div>'+wms.map(function(m){ var v=Math.min(m.goal,ws[m.key]||0), ok=wdone.indexOf(m.id)>=0||v>=m.goal; if(ok) nd++;
     var vs=m.u==='m'?fmtDist(v)+' / '+fmtDist(m.goal):fmtN(v)+' / '+fmtN(m.goal)+m.u;
-    return '<div class="mis wk'+(ok?' done':'')+'"><div class="ic">'+(ok?'✓':m.i)+'</div><div class="m"><b>'+m.t+'</b><div class="pbar"><i style="width:'+(v/m.goal*100)+'%"></i></div><div class="p">'+vs+'</div></div><div class="rw">'+(ok?'達成！':'+'+m.xp+'XP')+'</div></div>'; }).join('');
+    return '<div class="mis wk'+(ok?' done':'')+'"><div class="ic">'+(ok?'✓':m.i)+'</div><div class="m"><b>'+m.t+'</b>'+(m.key==='moon'&&!ok?'<small class="mh">円に近い形で囲むと成功。細長いとダメ</small>':'')+'<div class="pbar"><i style="width:'+(v/m.goal*100)+'%"></i></div><div class="p">'+vs+'</div></div><div class="rw">'+(ok?'達成！':'+'+m.xp+'XP')+'</div></div>'; }).join('');
   var cleared=wdone.indexOf('__clear')>=0;
   wh+='<div class="wkbonus'+(cleared?' done':'')+'"><div class="cr">👑</div><div class="t"><b>'+(cleared?'週間制覇 達成！':'3つそろえて 週間制覇')+'</b><small>'+(cleared?'来週もねらおう（制覇 '+fmtN(S.weekClears||0)+'回）':'ボーナス +'+fmtN(WEEK_BONUS)+'XP')+'</small></div><div class="dots">'+[0,1,2].map(function(i){return '<i'+(i<nd?' class="on"':'')+'></i>';}).join('')+'</div></div>';
   setTimeout(function(){ Array.prototype.forEach.call(document.querySelectorAll('[data-swap]'),function(b){ b.onclick=function(){ swapMission(+b.dataset.swap); }; });
