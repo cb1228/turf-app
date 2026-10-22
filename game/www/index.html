@@ -800,6 +800,15 @@ body.calm .mchest.hint{animation:none}
   <div id="instBody"></div>
   <button class="btnS" id="instClose" style="margin-top:14px">あとで</button>
 </div></div>
+<div class="modal" id="nameModal"><div class="mcard instc">
+  <div class="ntfart">✍️</div>
+  <div class="lvk">あなたの名前</div>
+  <div class="why" style="position:relative">ランキングに出る名前。あとから変えられるよ。</div>
+  <div class="np-in" style="margin-top:12px"><input id="nmTxt" maxlength="10" placeholder="例：江戸川の虎" autocomplete="off" autocapitalize="off" enterkeyhint="done" aria-label="あなたの名前"></div>
+  <div class="np-note" id="nmMsg" style="text-align:left">1〜10文字。本名や連絡先は書かないでね</div>
+  <button class="btnP" id="nmSet" style="margin-top:12px">この名前ではじめる</button>
+  <button class="btnS" id="nmSkip" style="margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px">おまかせの名前</button>
+</div></div>
 <div class="modal" id="endModal"><div class="mcard instc"><div class="rayw"><div class="rays"></div></div>
   <div class="ntfart">🚩</div>
   <div class="lvk">まだ囲めていないよ</div>
@@ -1096,7 +1105,8 @@ var walkMuni=null, muniCache={}, crossT=0;
 function checkCross(lat,lng){ if(mode!=='real'||!walking) return; var key=(Math.round(lat*100)/100)+','+(Math.round(lng*100)/100);
   var done=function(code){ if(!code) return; if(walkMuni&&code!==walkMuni){ loadMuni().then(function(){ var nm=muniName(code); if(!nm) return;
       var mine=Object.keys(S.pp||{}).length&&placeGroups().some(function(o){ return S.pn&&S.pn[o.key]&&S.pn[o.key].indexOf(nm)>=0; });
-      notify('📍 '+nm+'に入った！'+(mine?'':' はじめての街。囲めば新しい領地')); haptic('medium'); sfx('chest'); }); }
+      var mt=muniStats()[code], pc=mt&&muniKm2(code)?muniPct(mt.a,code):'';
+      notify('📍 '+nm+'に入った！'+(pc?' いま'+pc+'を制圧中':mine?'':' はじめての街。囲めば新しい領地')); haptic('medium'); sfx('chest'); }); }
     walkMuni=code; if(sess){ sess.munis=sess.munis||{}; sess.munis[code]=1; } };
   if(muniCache[key]) return done(muniCache[key]); var now=Date.now(); if(now-crossT<4000) return; crossT=now;
   fetch('https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat='+(Math.round(lat*100)/100)+'&lon='+(Math.round(lng*100)/100)).then(function(r){ return r.json(); })
@@ -2579,10 +2589,23 @@ function initOnb(){
   var sl=$('#slides'), dots=document.querySelectorAll('#dots i'), idx=0, nx=$('#onbNext');
   function upd(){ idx=Math.round(sl.scrollLeft/sl.clientWidth); dots.forEach(function(d,i){d.classList.toggle('on',i===idx);}); nx.textContent= idx>=2?'位置情報をONにして出陣':'次へ'; }
   sl.addEventListener('scroll',function(){ requestAnimationFrame(upd); });
-  nx.addEventListener('click',function(){ if(idx<2){ sl.scrollTo({left:(idx+1)*sl.clientWidth,behavior:'smooth'}); } else { finishOnb(); startWalk(); } });
+  nx.addEventListener('click',function(){ if(idx<2){ sl.scrollTo({left:(idx+1)*sl.clientWidth,behavior:'smooth'}); } else askName(function(){ finishOnb(); startWalk(); }); });
   $('#onbDemo').addEventListener('click',openDemo);
-  $('#onbLater').addEventListener('click',function(){ finishOnb(); notify('準備ができたら「出陣する」をタップ！'); });
+  $('#onbLater').addEventListener('click',function(){ askName(function(){ finishOnb(); notify('準備ができたら「出陣する」をタップ！'); }); });
 }
+// はじめに自分の名前を決める（書かなければ、おまかせの名前のまま）。ランキングと同じ確認（/api/name）を通す
+function askName(next){ if(S.nameAsked||S.cn||mode!=='real'){ next(); return; }
+  var t=$('#nmTxt'), msg=$('#nmMsg'), b=$('#nmSet'), done=function(){ S.nameAsked=1; save(); closeModal('#nameModal'); setTimeout(next,250); };
+  $('#nmSkip').textContent='おまかせ「'+myName()+'」'; t.value=''; msg.className='np-note'; msg.textContent='1〜10文字。本名や連絡先は書かないでね';
+  $('#nmSkip').onclick=done;
+  b.onclick=function(){ var v=t.value.trim(); if(!v){ msg.className='np-note err'; msg.textContent=NAME_ERR.len; return; }
+    b.disabled=true; msg.className='np-note'; msg.textContent='確認しています…';
+    regNow().then(function(){ return fpost('/api/name',{name:v}); }).then(function(r){ b.disabled=false;
+      if(r&&r.ok){ S.cn=r.name||''; notify('よろしく、'+myName()+'！'); haptic('success'); done(); return; }
+      msg.className='np-note err'; msg.textContent=NAME_ERR[r&&r.error]||'うまく保存できなかった。もう一度ためしてね'; })
+      .catch(function(){ b.disabled=false; msg.className='np-note err'; msg.textContent='つながらなかった。おまかせの名前ではじめて、あとでランキングから変えてもOK'; }); };
+  t.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); b.onclick(); } };
+  if($('#onb')) $('#onb').classList.add('hide'); openModal('#nameModal'); setTimeout(function(){ try{ t.focus(); }catch(e){} },350); }
 function finishOnb(){ S.onb=true; save(); $('#onb').classList.add('hide'); if(pendingCode) setTimeout(openPendingInvite,600); }
 
 /* ---------- wiring ---------- */

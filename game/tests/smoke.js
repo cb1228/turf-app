@@ -284,7 +284,10 @@ function serve() { return new Promise((res) => { const s = http.createServer((q,
     const a = await A.p.evaluate(() => ({ gcp: window.__gcp, wp: window.__wp || 0, onb: !document.getElementById('onb').classList.contains('hide') }));
     await A.p.evaluate(() => { const s = document.getElementById('slides'); s.scrollLeft = s.clientWidth * 2; }); await sleep(600);
     await A.p.evaluate(() => document.getElementById('onbNext').click()); await sleep(500);
+    const an = await A.p.evaluate(() => ({ name: document.getElementById('nameModal').classList.contains('show'), wp: window.__wp || 0 }));
+    await A.p.evaluate(() => document.getElementById('nmSkip').click()); await sleep(800);
     const a2 = await A.p.evaluate(() => ({ wp: window.__wp || 0 }));
+    check('はじめに名前を決める画面が出る（位置情報はまだ）', an.name && an.wp === 0, an);
     check('初回は開いただけでは位置情報を求めない', a.onb && a.gcp === 0 && a.wp === 0, a);
     check('「位置情報をONにして出陣」で初めて位置情報を使う', a2.wp >= 1, a2);
     const B = await open('', DONE, spy('granted')); await sleep(1500);

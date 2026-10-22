@@ -16,6 +16,7 @@ const srv = http.createServer((q, w) => {
   await p.evaluateOnNewDocument(() => { const G = Geolocation.prototype; G.getCurrentPosition = function () {}; G.watchPosition = function () { return 1; }; if (navigator.permissions) navigator.permissions.query = () => Promise.resolve({ state: 'prompt' }); });
   await p.setRequestInterception(true);
   p.on('request', (r) => { const u = r.url();
+    if (u.includes('/api/name')) return r.respond({ status: 200, contentType: 'application/json', body: '{"ok":true,"name":"月夜の旅人"}' });
     if (u.includes('/api/')) return r.respond({ status: 200, contentType: 'application/json', body: '{"ok":true,"top":[],"total":0}' });
     if (u.startsWith(base)) return r.continue();
     return r.respond({ status: 200, contentType: 'text/plain', body: '' }); });
@@ -24,7 +25,10 @@ const srv = http.createServer((q, w) => {
     await p.screenshot({ path: path.join(OUT, 'first_' + i + '.png') });
     await p.evaluate((k) => { const s = document.getElementById('slides'); s.scrollLeft = s.clientWidth * (k + 1); }, i); await sleep(700);
   }
-  await p.evaluate(() => document.getElementById('onbNext').click()); await sleep(1500);
+  await p.evaluate(() => document.getElementById('onbNext').click()); await sleep(900);
+  await p.screenshot({ path: path.join(OUT, 'first_name.png') }); // はじめに名前を決める
+  await p.type('#nmTxt', '月夜の旅人'); await p.evaluate(() => document.getElementById('nmSet').click()); await sleep(1600);
+  console.log('name', await p.evaluate(() => JSON.parse(localStorage.getItem('turf_v3')).cn));
   await p.screenshot({ path: path.join(OUT, 'first_3.png') });
   await br.close(); srv.close();
 });
