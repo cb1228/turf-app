@@ -701,6 +701,12 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 body.calm .mchest.hint{animation:none}
 .mis .m .mh{display:block;margin:2px 0 4px;font-size:10.5px;font-weight:700;line-height:1.4;color:var(--mute)} /* 満月の陣の条件 */
 .moonp{display:block;margin-top:2px;font-size:11.5px;font-weight:900;color:#ffe08a} /* 今戻れば満月の陣になる形 */
+.achnx{display:flex;flex-direction:column;gap:8px}
+.achnx>div{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.achnx .md{flex:none;font-size:22px;width:28px;text-align:center}
+.achnx .t{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 8px}
+.achnx b{font-size:13.5px;font-weight:900}.achnx small{font-size:11.5px;font-weight:800;color:var(--lime);text-align:right}
+.achnx .pbar{grid-column:1/-1;display:block;height:6px;margin-top:4px} /* 次に取れそうな実績 */
 </style>
 </head>
 <body>
@@ -1045,6 +1051,12 @@ var ACH=[
   {id:'c5000',i:'🏰',n:'五千マスの国',d:'領地5000マス',f:function(){return claimed.size>=5000;}},
   {id:'lv25',i:'⚔️',n:'覇王',d:'Lv.25に到達',f:function(){return levelOf(S.xp)>=25;}}
 ];
+
+// 実績の進み具合 [今, 目標, 単位]（数で測れるものだけ）
+var ACHP={c100:function(){return [claimed.size,100,'マス'];},c1000:function(){return [claimed.size,1000,'マス'];},c5000:function(){return [claimed.size,5000,'マス'];},
+  big200:function(){return [S.best||0,200,'マス'];},km1:function(){return [S.d||0,1000,'m'];},km10:function(){return [S.d||0,10000,'m'];},km42:function(){return [S.d||0,42195,'m'];},km100:function(){return [S.d||0,100000,'m'];},
+  loop10:function(){return [S.loops||0,10,'回'];},st3:function(){return [S.bestStreak||0,3,'日'];},st7:function(){return [S.bestStreak||0,7,'日'];},st30:function(){return [S.bestStreak||0,30,'日'];},
+  chest10:function(){return [S.chests||0,10,'個'];},gold10:function(){return [S.gold||0,10,'個'];},friend5:function(){return [S.frMax||0,5,'人'];},lv25:function(){return [levelOf(S.xp),25,'レベル'];}};
 
 /* ---------- state ---------- */
 var S={c:[],d:0,xp:0,loops:0,best:0,days:{},streak:0,bestStreak:0,lastDay:null,ach:[],skin:'lime',md:{},onb:false,hap:true};
@@ -2223,6 +2235,9 @@ function renderProfile(){
   h+=placesHTML();
   h+='<div class="sec">制圧スケール</div><div class="scale">'+CMP.slice(2).map(function(c){ var r=area/c[1], ok=r>=1;
     return '<div class="srow'+(ok?' ok':'')+'"><div class="top2"><span>'+c[0]+'</span><span>'+(ok?'×'+(r>=10?fmtN(r):r.toFixed(1))+' 制圧':Math.floor(r*1000)/10+'%')+'</span></div><div class="pbar"><i style="width:'+Math.min(100,r*100)+'%"></i></div></div>'; }).join('')+'</div>';
+  // 次に取れそうな実績（数で進み具合がわかるもの）を、近い順に3つ
+  var near=ACH.filter(function(a){ return S.ach.indexOf(a.id)<0&&ACHP[a.id]; }).map(function(a){ var q=ACHP[a.id](); return {a:a,v:q[0],g:q[1],u:q[2]||'',r:q[0]/q[1]}; }).filter(function(x){ return x.r>0&&x.r<1; }).sort(function(x,y){ return y.r-x.r; }).slice(0,3);
+  if(near.length) h+='<div class="sec">次に取れそうな実績</div><div class="achnx">'+near.map(function(x){ var rem=x.g-x.v; return '<div><span class="md">'+x.a.i+'</span><span class="t"><b>'+x.a.n+'</b><small>あと'+(x.u==='m'?fmtDist(Math.ceil(rem)):fmtN(Math.ceil(rem))+x.u)+'</small><i class="pbar"><i style="width:'+Math.round(x.r*100)+'%"></i></i></span></div>'; }).join('')+'</div>';
   h+='<div class="sec">実績 '+S.ach.length+' / '+ACH.length+'</div><div class="achs">'+ACH.map(function(a){ var ok=S.ach.indexOf(a.id)>=0;
     return '<div class="ach'+(ok?'':' lock')+'"><div class="md">'+(ok?a.i:'🔒')+'</div><b>'+a.n+'</b><small>'+a.d+'</small></div>'; }).join('')+'</div>';
   h+='<div class="sec">シーズンの称号</div>'+((S.badges&&S.badges.length)?'<div class="sbadges">'+S.badges.map(function(x){return '<span class="sbadge">'+x.i+' '+esc(x.t)+'</span>';}).join('')+'</div>':'<div class="shint">毎月の「今月」ランキングで、全国3位以内・地元1位・上位10%に入ると称号がもらえるよ</div>');

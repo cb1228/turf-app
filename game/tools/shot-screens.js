@@ -34,6 +34,7 @@ const srv = http.createServer((q, w) => {
   for (const [name, sel] of shots) {
     await p.evaluate((s) => { const e = eval(s); if (e) e.click(); }, sel); await sleep(900);
     await cut(name);
+    if (process.env.ACHNX && name === 'sc_profile') { await p.evaluate(() => { const e = document.querySelector('.achnx'); if (e) e.scrollIntoView({ block: 'center' }); }); await sleep(400); await p.screenshot({ path: path.join(OUT, 'sc_achnx.png') }); }
     if (process.env.SHEETTEXT) console.log('text', name, await p.evaluate(() => { const sh = document.querySelector('.sheet.show'); return sh ? sh.innerText.split(String.fromCharCode(10)).map((t) => t.trim()).filter(Boolean).join(' | ').slice(0, 2500) : ''; }));
     await p.screenshot({ path: path.join(OUT, name + '.png') });
     await p.evaluate(() => { if (window.closeSheet) closeSheet(); document.querySelectorAll('.sheet.show').forEach((m) => m.classList.remove('show')); document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); }); await sleep(500);
