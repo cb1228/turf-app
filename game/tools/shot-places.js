@@ -35,6 +35,9 @@ const srv = http.createServer((q, w) => {
   const names = await p.evaluate(() => [...document.querySelectorAll('.place .pn')].map((e) => e.textContent));
   console.log(JSON.stringify(names));
   await p.screenshot({ path: path.join(OUT, 'places.png') });
+  await sleep(1500); await p.evaluate(() => { document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')); const e = document.querySelector('#jpList'); if (e) e.scrollIntoView({ block: 'start' }); }); await sleep(500);
+  console.log('jp', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('#jpList .jprow')].map((e) => e.innerText.replace(/\s+/g, ' ')))));
+  await p.screenshot({ path: path.join(OUT, 'places_jp.png') });
   await p.evaluate(() => document.querySelector('.place').click()); await sleep(1500);
   await p.screenshot({ path: path.join(OUT, 'places_fly.png') });
   await br.close(); srv.close();

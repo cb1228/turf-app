@@ -385,6 +385,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 .jprow b{font-size:14px;font-weight:900}
 .jprow .jpp{font-size:16px;font-weight:900;color:var(--lime);font-variant-numeric:tabular-nums;text-align:right}
 .jprow small{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums}
+.jprow.jpmu{margin-left:18px;width:calc(100% - 18px);padding:7px 12px;background:rgba(255,255,255,.025)} .jprow.jpmu b{font-size:13px} .jprow.jpmu .jpp{font-size:14px} /* 県の下に市区町村 */
 .secn{font-size:11px;font-weight:800;color:var(--mute);margin-left:6px;letter-spacing:0}
 .plall{display:block;width:100%;padding:11px;border-radius:14px;margin:4px 0 10px;background:rgba(182,255,58,.12);border:1px solid rgba(182,255,58,.4);color:#fff;font:inherit;font-size:13.5px;font-weight:900}
 .places{display:flex;flex-direction:column;gap:6px}
@@ -589,7 +590,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
   -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(141,255,31,.45))}
 .resc .rbig span{font-size:20px;font-weight:900;margin-left:4px}
 .resc .rarea{font-size:12.5px;font-weight:800;color:rgba(255,255,255,.7);text-wrap:balance}
-.rarea .rpref{display:block;margin-top:4px;font-size:12px;opacity:.85}
+.rarea .rpref{display:block;margin-top:2px;font-size:11.5px;opacity:.85}
 .rrank{text-wrap:balance}
 .rrank .rnext{display:block;margin-top:3px;font-size:12px;font-weight:800;opacity:.85}.rrank .rnext b{color:#b6ff3a}
 .resc .rarea b{color:var(--gold);font-size:14px}
@@ -1935,7 +1936,11 @@ function prefLine(area){ var mc=walkMuni||S.muni; if(!MUNI&&mc){ loadMuni().then
   var gs=placeGroups(), st=prefStats(gs), tot=st[pf]?st[pf].a:0, ll=me.getLatLng(), m=PL_G;
   var here=gs.filter(function(o){ return ll.lat>=o.b[0][0]-m&&ll.lat<=o.b[1][0]+m&&ll.lng>=o.b[0][1]-m&&ll.lng<=o.b[1][1]+m; })[0];
   if(!here||!(S.pp&&S.pp[here.key])) tot+=area;
-  var el=document.createElement('small'); el.className='rpref'; el.textContent='🗾 '+pf+'の '+prefPct(tot,pf)+(tot>area*1.01?'（今回 +'+prefPct(area,pf)+'）':''); $('#rArea').appendChild(el); }catch(e){} }
+  // 歩いた市区町村の何%か（その市区町村の面積で割る）
+  var mt=0; if(muniKm2(mc)){ var ms=muniStats(gs); mt=ms[mc]?ms[mc].a:0; if(!here||!(S.pc&&S.pc[here.key])) mt+=area; }
+  var el=document.createElement('small'); el.className='rpref'; el.textContent='🗾 '+pf+'の '+prefPct(tot,pf)+(tot>area*1.01?'（今回 +'+prefPct(area,pf)+'）':'');
+  if(mt) el.textContent='🗾 '+pf+'の'+prefPct(tot,pf)+'・'+MUNI[mc][1]+'の'+muniPct(mt,mc); // 1行に（小さい画面で「とじる」が隠れないように）
+  $('#rArea').appendChild(el); }catch(e){} }
 function showResult(){
   var s0=sess; sess=null;
   var cells=claimed.size-s0.cells, area=areaOf(claimed)-s0.area, xp=S.xp-s0.xp, L=levelOf(S.xp), a=need(L), b=need(L+1);
@@ -2108,21 +2113,30 @@ function placeGroups(){
 }
 // かたまりの場所の名前（国土地理院の逆ジオコーダで市区町村コード→名前。結果は端末に覚える）
 function placeName(o,cb){
-  S.pn=S.pn||{}; if(S.pn[o.key]) return cb(S.pn[o.key]);
+  S.pn=S.pn||{}; S.pc=S.pc||{}; if(S.pn[o.key]&&S.pc[o.key]) return cb(S.pn[o.key]); var had=S.pn[o.key]; if(had) cb(had);
   fetch('https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat='+o.la.toFixed(2)+'&lon='+o.lo.toFixed(2)).then(function(r){return r.json();})
-    .then(function(j){ var cd=j&&j.results&&j.results.muniCd; if(!cd){ cb('名前のない場所',true); return; } var code=String(parseInt(cd,10)); return loadMuni().then(function(){ var m=MUNI&&MUNI[code]; if(!m){ cb('名前のない場所',true); return; } S.pn[o.key]=m[0]+' '+m[1]; S.pp=S.pp||{}; S.pp[o.key]=m[0]; save(); cb(S.pn[o.key]); }); })
-    .catch(function(){ cb('（名前は あとで表示）',true); }); // 調べられなかったら「調べています…」のままにしない（次に開いたときにまた調べる）
+    .then(function(j){ var cd=j&&j.results&&j.results.muniCd; if(!cd){ cb('名前のない場所',true); return; } var code=String(parseInt(cd,10)); return loadMuni().then(function(){ var m=MUNI&&MUNI[code]; if(!m){ cb('名前のない場所',true); return; } S.pn[o.key]=m[0]+' '+m[1]; S.pp=S.pp||{}; S.pp[o.key]=m[0]; S.pc[o.key]=code; save(); if(!had) cb(S.pn[o.key]); }); })
+    .catch(function(){ if(!had) cb('（名前は あとで表示）',true); }); // 調べられなかったら「調べています…」のままにしない（次に開いたときにまた調べる）
 }
 // ---- 県ごとの制圧率: 県の面積のうち何%を取ったか（県名は征服した場所の逆ジオコーダ結果から） ----
 function prefStats(gs){ var st={}; (gs||placeGroups()).forEach(function(o){ var pf=S.pp&&S.pp[o.key]; if(!pf) return; var t=st[pf]||(st[pf]={a:0,n:0,best:null}); t.a+=o.a; t.n++; if(!t.best||o.a>t.best.a) t.best=o; }); return st; }
 // 都道府県の面積（km²）国土地理院「全国都道府県市区町村別面積調」2025年7月1日時点
 var PREF_KM2={'北海道':83422.27,'岩手県':15275.05,'福島県':13784.41,'長野県':13561.57,'新潟県':12583.94,'秋田県':11637.46,'岐阜県':10621.29,'青森県':9645.11,'山形県':9323.15,'鹿児島県':9186.21,'広島県':8478.16,'兵庫県':8400.82,'静岡県':7777.00,'宮崎県':7734.16,'熊本県':7409.13,'宮城県':7282.30,'岡山県':7114.44,'高知県':7102.28,'島根県':6707.79,'栃木県':6408.09,'群馬県':6362.28,'大分県':6340.71,'山口県':6112.92,'茨城県':6098.32,'三重県':5774.48,'愛媛県':5675.87,'愛知県':5173.23,'千葉県':5156.48,'福岡県':4987.66,'和歌山県':4724.65,'京都府':4612.09,'山梨県':4465.27,'富山県':4247.55,'石川県':4190.94,'福井県':4190.59,'徳島県':4146.96,'長崎県':4131.21,'滋賀県':4017.38,'埼玉県':3797.75,'奈良県':3690.94,'鳥取県':3507.04,'佐賀県':2440.64,'神奈川県':2416.55,'沖縄県':2282.11,'東京都':2199.94,'大阪府':1905.26,'香川県':1876.83};
 // その県の面積のうち何%を取ったか（とても小さいので、有効数字2けたで出す）
-function prefPct(a,pf){ var k=PREF_KM2[pf]; if(!k) return ''; var p=a/(k*1e6)*100; if(p<0.00001) return '0.00001%未満'; if(p>=10) return p.toFixed(1)+'%'; return p.toFixed(Math.min(5,Math.max(1,1-Math.floor(Math.log10(p)))))+'%'; }
+function muniKm2(c){ return MUNI&&MUNI[c]&&MUNI[c][2]||0; }
+function muniStats(gs){ var st={}; (gs||placeGroups()).forEach(function(o){ var c=S.pc&&S.pc[o.key]; if(!c) return; var t=st[c]||(st[c]={a:0,n:0,best:null}); t.a+=o.a; t.n++; if(!t.best||o.a>t.best.a) t.best=o; }); return st; }
+function muniPct(a,c){ return pctOf(a,muniKm2(c)); }
+function prefPct(a,pf){ return pctOf(a,PREF_KM2[pf]); }
+function pctOf(a,k){ if(!k) return ''; var p=a/(k*1e6)*100; if(p<0.00001) return '0.00001%未満'; if(p>=10) return p.toFixed(1)+'%'; return p.toFixed(Math.min(5,Math.max(1,1-Math.floor(Math.log10(p)))))+'%'; }
 function prefListHTML(st){
   var ks=Object.keys(st).filter(function(k){ return PREF_KM2[k]; }).sort(function(a,b){ return st[b].a/PREF_KM2[b]-st[a].a/PREF_KM2[a]; });
   if(!ks.length) return '<div class="jplist" id="jpList"></div>';
-  return '<div class="jplist" id="jpList">'+ks.map(function(k){ return '<button type="button" class="jprow" data-pf="'+k+'"><b>'+k+'</b><span class="jpp">'+prefPct(st[k].a,k)+'</span><small>'+fmtArea(st[k].a)+' / '+fmtN(Math.round(PREF_KM2[k]))+'km²</small></button>'; }).join('')+'<div class="shint" style="margin-top:2px">数字は、その県の面積のうち自分の領地になった割合。タップでその県の領地へ</div></div>';
+  var ms=MUNI?muniStats():{};
+  return '<div class="jplist" id="jpList">'+ks.map(function(k){
+    // その県の中の市区町村ごとの割合（割合の大きい順に5つまで）
+    var mc=Object.keys(ms).filter(function(c){ return MUNI[c]&&MUNI[c][0]===k&&muniKm2(c); }).sort(function(a,b){ return ms[b].a/muniKm2(b)-ms[a].a/muniKm2(a); }).slice(0,5);
+    return '<button type="button" class="jprow" data-pf="'+k+'"><b>'+k+'</b><span class="jpp">'+prefPct(st[k].a,k)+'</span><small>'+fmtArea(st[k].a)+' / '+fmtN(Math.round(PREF_KM2[k]))+'km²</small></button>'
+      +mc.map(function(c){ return '<button type="button" class="jprow jpmu" data-mc="'+c+'"><b>'+esc(MUNI[c][1])+'</b><span class="jpp">'+muniPct(ms[c].a,c)+'</span><small>'+fmtArea(ms[c].a)+' / '+(muniKm2(c)>=100?fmtN(Math.round(muniKm2(c))):muniKm2(c).toFixed(1))+'km²</small></button>'; }).join(''); }).join('')+'<div class="shint" style="margin-top:2px">数字は、その県・市区町村の面積のうち自分の領地になった割合。タップでその領地へ</div></div>';
 }
 function japanHTML(gs){
   var st=prefStats(gs), got=Object.keys(st).length;
@@ -2130,8 +2144,12 @@ function japanHTML(gs){
   return h+'</div>'+prefListHTML(st);
 }
 function bindJapan(gs){
+  if(!MUNI){ loadMuni().then(function(){ if(MUNI) refreshJapan(gs); }); }
+  [].forEach.call(document.querySelectorAll('#jpList .jpmu'),function(b){ b.onclick=function(){ var c=b.getAttribute('data-mc'), t=muniStats(gs)[c]; if(!t) return; var o=t.best;
+    closeSheet(); follow=false; $('#recenter').classList.remove('on'); map.fitBounds([[o.b[0][0]-CELL,o.b[0][1]-CELL],[o.b[1][0]+CELL,o.b[1][1]+CELL]],{padding:[40,40],maxZoom:17});
+    notify('📍 '+MUNI[c][1]+'の '+muniPct(t.a,c)+' を制圧（'+fmtArea(t.a)+'）'); haptic('light'); }; });
   var jo=$('#jpOpen'); if(jo) jo.onclick=function(){ closeSheet(); setTimeout(fogOn,250); };
-  [].forEach.call(document.querySelectorAll('#jpList .jprow'),function(b){ b.onclick=function(){ var t=prefStats(gs)[b.getAttribute('data-pf')];
+  [].forEach.call(document.querySelectorAll('#jpList .jprow:not(.jpmu)'),function(b){ b.onclick=function(){ var t=prefStats(gs)[b.getAttribute('data-pf')];
     if(!t){ notify('📍 '+b.getAttribute('data-pf')+'はまだ。旅先でぐるっと囲んで制圧しよう'); return; }
     var o=t.best; closeSheet(); follow=false; $('#recenter').classList.remove('on'); map.fitBounds([[o.b[0][0]-CELL,o.b[0][1]-CELL],[o.b[1][0]+CELL,o.b[1][1]+CELL]],{padding:[40,40],maxZoom:17});
     notify('📍 '+b.getAttribute('data-pf')+'の '+prefPct(t.a,b.getAttribute('data-pf'))+' を制圧（'+fmtArea(t.a)+'・'+t.n+'か所）'); haptic('light'); }; });
