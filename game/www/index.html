@@ -2256,7 +2256,7 @@ function renderProfile(){
     var s=SKINS.filter(function(x){return x.id===b.dataset.skin;})[0];
     if(s.pro&&!S.pro){ closeSheet(); openPro(); return; }
     if(s.chest&&!S.ember){ notify('金の宝箱から、まれに出るよ'); return; }
-    if(!s.pro&&!s.chest&&levelOf(S.xp)<s.lv){ notify('Lv.'+s.lv+'で解放されるよ'); return; }
+    if(!s.pro&&!s.chest&&levelOf(S.xp)<s.lv){ notify('🔒 '+s.n+'はLv.'+s.lv+'で解放（あと'+fmtN(Math.max(0,need(s.lv)-S.xp))+'XP）'); haptic('light'); return; }
     S.skin=s.id; if(mode==='real') save(); else { try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');o.skin=s.id;localStorage.setItem(KEY,JSON.stringify(o));}catch(e){} }
     redraw(); renderProfile(); haptic('light'); }); });
 }
