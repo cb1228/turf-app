@@ -38,6 +38,7 @@ const srv = http.createServer((q, w) => {
   for (let i = 0; i <= 12; i++) pts.push([la0 + d * i / 12, lo0]);
   for (let i = 1; i <= 12; i++) pts.push([la0 + d, lo0 + d * 1.2 * i / 12]);
   for (let i = 1; i <= 10; i++) pts.push([la0 + d - d * i / 12, lo0 + d * 1.2]);
+  if (process.env.ROUND) { pts.length = 0; for (let i = 0; i <= 26; i++) { const t = i / 30 * Math.PI * 2; pts.push([la0 + 0.0011 * Math.sin(t), lo0 + 0.0011 * 1.23 * (1 - Math.cos(t))]); } } // 円に近い道（満月の陣の目安）
   if (process.env.FIRST === 'loop') { for (let i = 1; i <= 14; i++) pts.push([35.6852 + 0.0018 / 6 - (0.0018 / 6) * i / 14, 139.77 + 0.0018 * 1.2 - 0.0018 * 1.2 * i / 14]); }
   else if (process.env.FIRST) pts.splice(8);
   for (const [a, b] of pts) { await p.evaluate((a, b) => window.__fix(a, b), a, b); await sleep(120); }

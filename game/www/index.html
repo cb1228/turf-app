@@ -700,6 +700,7 @@ body.fogon .herehint,body.fogon .top,body.fogon .terr,body.fogon .evt,body.fogon
 @keyframes chint{to{transform:translateY(-6px) scale(1.18)}} /* 知らせた宝箱を地図で見つけやすく */
 body.calm .mchest.hint{animation:none}
 .mis .m .mh{display:block;margin:2px 0 4px;font-size:10.5px;font-weight:700;line-height:1.4;color:var(--mute)} /* 満月の陣の条件 */
+.moonp{display:block;margin-top:2px;font-size:11.5px;font-weight:900;color:#ffe08a} /* 今戻れば満月の陣になる形 */
 </style>
 </head>
 <body>
@@ -1923,9 +1924,9 @@ function renderGuide(){
   var a=path[path.length-1], b=path[0], brg=Math.atan2((b[1]-a[1])*Math.cos(a[0]*Math.PI/180),b[0]-a[0])*180/Math.PI;
   $('#gArr').style.transform='rotate('+Math.round(brg)+'deg)'; $('#gArr').style.visibility=gap>CLOSE_M?'visible':'hidden';
   // 今スタートに戻ったら何マスくらい取れるか（道で囲んだ形の面積から。すでに自分の領地の所は数えない目安）
-  var est=0, raw=0; if(path.length>=MIN_LOOP_PTS&&pathLen(path)>=LOOP_MIN_P*0.6){ var A=shapeOf(path).A, ca=cellArea(Math.floor(path[0][0]/CELL)); raw=Math.round(A/ca); if(raw>=10) est=estCached(); }
+  var est=0, raw=0, moonish=false; if(path.length>=MIN_LOOP_PTS&&pathLen(path)>=LOOP_MIN_P*0.6){ var spf=shapeOf(path); moonish=spf.c>=0.85; var A=spf.A, ca=cellArea(Math.floor(path[0][0]/CELL)); raw=Math.round(A/ca); if(raw>=10) est=estCached(); }
   var own=raw>=10&&est<10;
-  $('#gEst').innerHTML= est>=10 ? (gap<=CLOSE_M*3?'もうすぐ！ ':'')+'戻れば 約<b>'+fmtN(est)+'</b>マス 領地に' : own ? 'ここはもう自分の領地。<b>外側</b>へ広げて囲もう' : !S.loops ? 'まずは<b>1ブロック</b>ぐるっと（1周200mくらい）' : '';
+  $('#gEst').innerHTML= est>=10 ? (gap<=CLOSE_M*3?'もうすぐ！ ':'')+'戻れば 約<b>'+fmtN(est)+'</b>マス 領地に'+(moonish?'<span class="moonp">🌕 満月の陣になりそう ×1.5</span>':'') : own ? 'ここはもう自分の領地。<b>外側</b>へ広げて囲もう' : !S.loops ? 'まずは<b>1ブロック</b>ぐるっと（1周200mくらい）' : '';
   var nr=est>=10&&gap<=CLOSE_M*3; if(nr&&!$('#guide').classList.contains('near')) haptic('light');
   $('#guide').classList.toggle('near',nr); updateGhost(est);
   var left=S.lastLoop?15*60e3-(Date.now()-S.lastLoop):0;
