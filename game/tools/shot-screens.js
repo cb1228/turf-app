@@ -48,5 +48,13 @@ const srv = http.createServer((q, w) => {
     console.log('namerow', await p.evaluate(() => ({ rank: !!document.querySelector('#shRank.show'), pick: !document.getElementById('namePick').hidden })));
     await p.screenshot({ path: path.join(OUT, 'sc_namerow.png') });
   }
+  if (process.env.RANKTABS) { // ランキングの各タブが空のときの見え方
+    await p.evaluate(() => { document.querySelectorAll('.sheet.show').forEach((m) => m.classList.remove('show')); document.getElementById('btnRank').click(); }); await sleep(1200);
+    for (const k of ['week', 'local', 'month', 'all', 'friends']) {
+      await p.evaluate((k) => document.querySelector('#rkSeg button[data-k="' + k + '"]').click(), k); await sleep(1300);
+      console.log('tab', k, await p.evaluate(() => { const sh = document.querySelector('.sheet.show'); return sh ? sh.innerText.split(String.fromCharCode(10)).map((t) => t.trim()).filter(Boolean).join(' | ').slice(0, 600) : ''; }));
+      await p.screenshot({ path: path.join(OUT, 'rk_' + k + '.png') });
+    }
+  }
   await br.close(); srv.close();
 });
