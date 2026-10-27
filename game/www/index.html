@@ -184,7 +184,7 @@ body.calm .guide.near{animation:none}
 /* ===== dock ===== */
 .dock{position:absolute;z-index:1000;left:0;right:0;bottom:0;padding:16px 14px calc(var(--sab) + 14px);display:flex;align-items:center;gap:12px;
   background:linear-gradient(rgba(12,15,20,0),rgba(12,15,20,.92) 55%)}
-.side{position:relative;width:64px;height:64px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+.side{position:relative;width:64px;height:64px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   font-size:10.5px;font-weight:800;color:rgba(255,255,255,.85);flex:none;transition:transform .12s}
 .side:active{transform:scale(.94)}
 .side svg{width:23px;height:23px}
@@ -226,7 +226,15 @@ body.big .rival{zoom:1.14}
 .today small{display:block;font-size:10.5px;font-weight:800;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today b em{font-style:normal;color:#ffd23f}
 .today .done b{color:var(--lime)}
-@media (max-width:360px){ .today{left:10px;right:10px;gap:6px} .today button{padding:8px 8px;gap:5px;border-radius:14px} .today .ic{font-size:16px} .today b{font-size:12px;letter-spacing:-.02em} .today small{font-size:10px;letter-spacing:-.03em} } /* 小さい画面でも「ミッション 0/3」まで読める */
+/* 下の「今日」：2枚のカード→1枚のトレイを左右に分ける（上の列・下の操作と角の丸さをそろえる） */
+.today{gap:0;padding:4px;border-radius:20px;background:var(--panel);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.today button.glass{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:none;border-radius:16px}
+.today button+button{position:relative}
+.today button+button::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:1px;background:var(--line)}
+.today button:active{background:rgba(255,255,255,.06)}
+.today .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:rgba(255,255,255,.07)}
+.today button{padding:8px 9px}
+@media (max-width:360px){ .today{left:10px;right:10px;gap:0} .today button{padding:6px 6px;gap:6px;border-radius:14px} .today .ic{font-size:14px;width:28px;height:28px;border-radius:9px} .today b{font-size:12px;letter-spacing:-.02em} .today small{font-size:10px;letter-spacing:-.03em} } /* 小さい画面でも「ミッション 0/3」まで読める */
 body.has-today .recenter{bottom:calc(var(--sab) + 172px)}
 .fogbtn{position:absolute;z-index:1000;right:14px;bottom:calc(var(--sab) + 220px);width:46px;height:46px;border-radius:50%;display:grid;place-items:center}
 body.has-today .fogbtn{bottom:calc(var(--sab) + 228px)}
