@@ -36,6 +36,10 @@ const srv = http.createServer((q, w) => {
   console.log(await p.evaluate(() => document.getElementById('fogTxt').innerText));
   console.log(await p.evaluate(() => [...document.querySelectorAll('.leaflet-fog-pane canvas')].map((c) => c.style.transform + ' ' + c.parentNode.style.transform).slice(0, 8)));
   await p.screenshot({ path: path.join(OUT, 'fog_all.png') });
+  await sleep(1500); await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show'))); await sleep(300); console.log('cards', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('#fogPlaces .fpc')].map((b) => b.innerText.split(String.fromCharCode(10)).join(' / ')))));
+  await p.screenshot({ path: path.join(OUT, 'fog_cards.png') });
+  await p.evaluate(() => document.querySelectorAll('#fogPlaces .fpc')[2].click()); await sleep(1800);
+  await p.screenshot({ path: path.join(OUT, 'fog_fly.png') });
   await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show')));
   await p.evaluate(() => 0); await p.mouse.move(278, 314); await sleep(300);
   await p.evaluate(() => document.querySelectorAll('.modal.show').forEach((m) => m.classList.remove('show'))); await sleep(500);

@@ -719,6 +719,17 @@ body.calm .mchest.hint{animation:none}
 .achnx .t{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 8px}
 .achnx b{font-size:13.5px;font-weight:900}.achnx small{font-size:11.5px;font-weight:800;color:var(--lime);text-align:right}
 .achnx .pbar{grid-column:1/-1;display:block;height:6px;margin-top:4px} /* 次に取れそうな実績 */
+.fogplaces{position:absolute;z-index:1001;left:0;right:0;bottom:calc(var(--sab) + 100px);display:flex;gap:10px;overflow-x:auto;padding:4px 14px 8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fogplaces::-webkit-scrollbar{display:none}
+.fogplaces[hidden]{display:none}
+.fpc{flex:none;width:138px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:11px 13px;border-radius:18px;text-align:left;color:#fff;font:inherit;
+  background:var(--panel);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);box-shadow:0 10px 26px rgba(0,0,0,.4);transition:transform .15s,border-color .15s}
+.fpc:active{transform:scale(.96)}
+.fpc.on{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime),0 10px 26px rgba(0,0,0,.4)}
+.fpc b{max-width:100%;font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpc .fa{font-size:17px;font-weight:900;color:var(--lime);font-variant-numeric:tabular-nums}
+.fpc small{font-size:10.5px;font-weight:800;color:var(--mute);min-height:13px} /* 領地マップの場所カード */
+body.fogon .fogbtn{bottom:calc(var(--sab) + 268px)} body.fogon .recenter{bottom:calc(var(--sab) + 212px)} /* 場所カードの上に */
 </style>
 </head>
 <body>
@@ -751,6 +762,7 @@ body.calm .mchest.hint{animation:none}
 <button class="recenter glass" id="recenter" aria-label="現在地へ"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg></button>
 
 <button class="fogbtn glass" id="btnFog" type="button" aria-label="領地マップ（これまで取った領地を全部見る）" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></button>
+<div class="fogplaces" id="fogPlaces" hidden></div>
 <div class="fogbar glass" id="fogBar" hidden><b>領地マップ</b><span id="fogTxt"></span><button type="button" id="fogClose" aria-label="領地マップを閉じる">×</button></div>
 <button class="rival glass" id="rival" aria-hidden="true" tabindex="-1"></button>
 <div class="herehint glass" id="hereHint" hidden>📍 まだ現在地がわからないよ<br><b>「出陣する」</b>で、いまいる場所の地図になる</div>
@@ -1601,10 +1613,26 @@ function fogOn(){
   var n=claimed.size, gs=placeGroups(), pf=0; try{ pf=Object.keys(prefStats(gs)).length; }catch(e){}
   $('#fogTxt').innerHTML= n ? 'ぜんぶで <em>'+fmtArea(areaOf(claimed))+'</em>・<em>'+gs.length+'</em>か所'+(pf>1?'・<em>'+pf+'</em>都道府県':'')+'。指で広げると、塗った所がくわしく見える' : 'まだ領地がないよ。出陣して、ぐるっと囲んでみよう';
   if(n){ var b=[[90,180],[-90,-180]]; claimed.forEach(function(k){ var q=k.split(','), la=(+q[1]+.5)*CELL, lo=(+q[0]+.5)*CELL; if(la<b[0][0]) b[0][0]=la; if(lo<b[0][1]) b[0][1]=lo; if(la>b[1][0]) b[1][0]=la; if(lo>b[1][1]) b[1][1]=lo; });
-    follow=false; $('#recenter').classList.remove('on'); map.fitBounds([[b[0][0]-CELL*4,b[0][1]-CELL*4],[b[1][0]+CELL*4,b[1][1]+CELL*4]],{padding:[70,70],maxZoom:16}); }
+    follow=false; $('#recenter').classList.remove('on'); map.fitBounds([[b[0][0]-CELL*4,b[0][1]-CELL*4],[b[1][0]+CELL*4,b[1][1]+CELL*4]],{padding:[70,70],maxZoom:16}); fogPlaces(gs,b); }
   haptic('light');
 }
-function fogOff(back){ if(!fogLayer) return; if(back&&fogPrev){ map.setView(fogPrev.c,fogPrev.z,{animate:true}); if(fogPrev.f){ follow=true; $('#recenter').classList.add('on'); } } fogPrev=null; fogLayer=null; document.body.classList.remove('fogon'); $('#btnFog').classList.remove('on'); $('#btnFog').setAttribute('aria-pressed','false'); $('#fogBar').hidden=true; }
+// 塗った場所のカードを下に横並び（Zenly の探検のように）。タップでその場所へ飛ぶ。いちばん左は「ぜんぶ」
+function fogPlaces(gs,all){ var el=$('#fogPlaces'); if(!el) return; var list=gs.slice().sort(function(a,b){ return b.a-a.a; }).slice(0,30);
+  if(!MUNI){ loadMuni().then(function(){ if(MUNI&&fogLayer) fogPlaces(gs,all); }); }
+  var ms=MUNI?muniStats(gs):{};
+  var card=function(o,i){ var nm=S.pn&&S.pn[o.key], c=S.pc&&S.pc[o.key], pc=c&&ms[c]&&muniKm2(c)?muniPct(ms[c].a,c):'', d=o.t1?new Date(o.t1):null;
+    return '<button type="button" class="fpc" data-i="'+i+'"><b data-k="'+o.key+'">'+esc(nm?nm.replace(/^\S+\s/,''):'調べています…')+'</b><span class="fa">'+fmtArea(o.a)+'</span><small>'+(pc?pc+' 制圧':'')+(pc&&d?' ・ ':'')+(d?(d.getMonth()+1)+'/'+d.getDate():'')+'</small></button>'; };
+  el.innerHTML='<button type="button" class="fpc all on" data-i="-1"><b>🗾 ぜんぶ</b><span class="fa">'+list.length+'か所</span><small>'+fmtArea(areaOf(claimed))+'</small></button>'+list.map(card).join('');
+  el.hidden=false; el.scrollLeft=0;
+  [].forEach.call(el.querySelectorAll('.fpc'),function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); [].forEach.call(el.querySelectorAll('.fpc'),function(x){ x.classList.toggle('on',x===b); }); try{ b.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); }catch(e){}
+    if(i<0) map.flyToBounds([[all[0][0]-CELL*4,all[0][1]-CELL*4],[all[1][0]+CELL*4,all[1][1]+CELL*4]],{padding:[70,70],maxZoom:16,duration:.9});
+    else { var o=list[i]; map.flyToBounds([[o.b[0][0]-CELL*2,o.b[0][1]-CELL*2],[o.b[1][0]+CELL*2,o.b[1][1]+CELL*2]],{padding:[60,60],maxZoom:17,duration:.9}); }
+    haptic('light'); }; });
+  // 名前がまだの場所は、順に調べて書きかえる
+  list.forEach(function(o){ if(S.pn&&S.pn[o.key]&&S.pc&&S.pc[o.key]) return; placeName(o,function(nm){ var t=el.querySelector('b[data-k="'+o.key+'"]'); if(!t) return; t.textContent=String(nm).replace(/^\S+\s/,'');
+    var c=S.pc&&S.pc[o.key], sm=t.parentNode.querySelector('small'), d=o.t1?new Date(o.t1):null; if(c&&MUNI&&muniKm2(c)&&sm){ var m2=muniStats(gs)[c]; if(m2) sm.textContent=muniPct(m2.a,c)+' 制圧'+(d?' ・ '+(d.getMonth()+1)+'/'+d.getDate():''); } }); });
+}
+function fogOff(back){ if(!fogLayer) return; if(back&&fogPrev){ map.setView(fogPrev.c,fogPrev.z,{animate:true}); if(fogPrev.f){ follow=true; $('#recenter').classList.add('on'); } } fogPrev=null; fogLayer=null; document.body.classList.remove('fogon'); $('#btnFog').classList.remove('on'); $('#btnFog').setAttribute('aria-pressed','false'); $('#fogBar').hidden=true; if($('#fogPlaces')) $('#fogPlaces').hidden=true; }
 function settleCells(){ clearTimeout(settleT); settleT=null; animating.clear(); cellsLayer.clearLayers(); repaintCells(); }
 var chestLayer=L.layerGroup().addTo(map), chestMk={};
 function drawGold(){
