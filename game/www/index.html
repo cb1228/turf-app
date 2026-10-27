@@ -761,7 +761,7 @@ body.fogon .fogbtn{bottom:calc(var(--sab) + 268px)} body.fogon .recenter{bottom:
 
 <button class="recenter glass" id="recenter" aria-label="現在地へ"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg></button>
 
-<button class="fogbtn glass" id="btnFog" type="button" aria-label="領地マップ（これまで取った領地を全部見る）" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></button>
+<button class="fogbtn glass" id="btnFog" type="button" aria-label="領地マップ（これまで取った領地を全部見る）" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 4.5-9 4.5-9-4.5z" fill="currentColor" fill-opacity=".28"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5l9 4.5 9-4.5"/></svg></button>
 <div class="fogplaces" id="fogPlaces" hidden></div>
 <div class="fogbar glass" id="fogBar" hidden><b>領地マップ</b><span id="fogTxt"></span><button type="button" id="fogClose" aria-label="領地マップを閉じる">×</button></div>
 <button class="rival glass" id="rival" aria-hidden="true" tabindex="-1"></button>
@@ -2106,6 +2106,7 @@ function stopWalk(silent){
 // （tests/gps-sim.js で、信号待ち・立ち止まり・大ブレを含む歩行を再現して調整した値）
 var fixBuf=[], fastN=0, roughShown=false, roughAt=0;
 function onFix(p){
+  if(!S.geoOk){ S.geoOk=1; save(); }
   var c=p.coords, acc=c.accuracy||15;
   // 途切れ／精度低めから戻ったか（知らせは下で1回だけ）
   var lostT=gpsLostAt||roughSince; if(acc<=45){ gpsLostAt=0; roughSince=0; }
@@ -2308,6 +2309,7 @@ function renderSettings(){
     +'<button class="row" id="sSnd"><div class="l"><b>サウンド</b><small>囲んだ瞬間や宝箱で、やわらかい効果音が鳴る</small></div><span class="sw2'+(S.snd?' on':'')+'"></span></button>'
     +(!nativeP()&&isIOS()&&appStoreURL()?'<a class="row prorow" href='+appStoreURL()+' target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="l"><b>iPhoneアプリ版をダウンロード</b><small>画面を消してポケットに入れたままでも記録できる・無料</small></div><span class="chev">›</span></a>':'')
     +(nativeP()?'':'<button class="row" id="sWake"><div class="l"><b>歩いている間は画面を消さない</b><small>Web版は画面が消えるとGPSが止まり、道が記録されません（アプリ版は画面を消してもOK）</small></div><span class="sw2'+(S.noWake?'':' on')+'"></span></button>')
+    +'<button class="row" id="sAuto"><div class="l"><b>開いたらすぐ出陣</b><small>アプリを開くと、そのまま歩いた道の記録を始める</small></div><span class="sw2'+(S.autoGo!==false?' on':'')+'"></span></button>'
     +'<button class="row" id="sHap"><div class="l"><b>触覚フィードバック</b><small>領地GETやレベルアップでブルッと震える</small></div><span class="sw2'+(S.hap?' on':'')+'"></span></button>'
     +'<div class="row"><div class="l"><b>位置情報とプライバシー</b><small>歩いた道と領地はこの端末の中だけに保存されます。地元ランキングのため、約1km単位にぼかした位置から市区町村を調べます（国土地理院の無料サービス）。ランキングには面積・マス数・レベル・市区町村と、名前（自動の組み合わせか自分で書いた名前）・アイコンだけが送られます。アカウント登録は不要です。</small></div></div>'
     +(lnP()?'<button class="row" id="sNtf"><div class="l"><b>お知らせ</b><small>歩き忘れた日の夜7時に1回・月曜の朝に今週の目標</small></div><span class="sw2'+(S.ntf?' on':'')+'"></span></button>':'')
@@ -2339,6 +2341,7 @@ function renderSettings(){
   $('#sCalm').onclick=function(){ S.calm=!document.body.classList.contains('calm'); save(); applyA11y(); renderSettings(); };
   $('#sSnd').onclick=function(){ S.snd=!S.snd; save(); renderSettings(); if(S.snd) sfx('claim'); };
   if($('#sWake')) $('#sWake').onclick=function(){ S.noWake=!S.noWake; save(); if(walking){ if(S.noWake) wakeOff(); else wakeOn(); } renderSettings(); };
+  $('#sAuto').onclick=function(){ S.autoGo=S.autoGo===false; save(); renderSettings(); haptic('light'); };
   $('#sHap').onclick=function(){ S.hap=!S.hap; save(); renderSettings(); haptic('light'); };
   var armed=false; $('#sReset').onclick=function(){
     if(!armed){ armed=true; this.querySelector('b').textContent='もう一度タップで完全に消去'; return; }
@@ -2925,6 +2928,12 @@ function peekLocation(){
   if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){ if(r.state==='granted') go(); }).catch(function(){});
 }
 
+// アプリを開いたら、そのまま出陣する（設定でOFFにできる）。位置情報がすでに許可されていて、前に出陣したことがある時だけ
+function autoGo(){ if(SHOT||mode!=='real'||walking||S.autoGo===false||!S.onb||!S.loops) return;
+  var go=function(){ if(walking||document.querySelector('.modal.show')) return; startWalk(); };
+  if(S.geoOk) { setTimeout(go,1200); return; }
+  if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){ if(r.state==='granted') setTimeout(go,1200); }).catch(function(){}); }
+
 /* ---------- boot ---------- */
 if(SHOT){ shotSeed(); S.skin='lime'; var qs=location.search.match(/[?&]skin=(\w+)/); if(qs&&SKINS.some(function(k){return k.id===qs[1];})){ S.skin=qs[1]; S.pro=1; } } else load(); // 撮影用: ?demo=2&skin=rainbow
 redraw(); renderAll(); initOnb(); drawGold(); drawChests();
@@ -2936,7 +2945,7 @@ else{
   if(!S.onb) $('#onb').classList.remove('hide');
   checkInApp();
   setTimeout(checkSeason,2500); setTimeout(loadRival,3200); setTimeout(checkFriends,4200); setTimeout(checkRecap,3600); setTimeout(checkNews,5200);
-  peekLocation();
+  peekLocation(); autoGo();
 }
 // Web版だけ: 電波がない場所でも起動できるよう Service Worker を登録（効く範囲は /turf のページだけ）
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!nativeP()&&!SHOT) navigator.serviceWorker.register('/turf-sw.js',{scope:'/turf'}).catch(function(){});

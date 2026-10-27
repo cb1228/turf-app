@@ -56,5 +56,10 @@ const srv = http.createServer((q, w) => {
       await p.screenshot({ path: path.join(OUT, 'rk_' + k + '.png') });
     }
   }
+  if (process.env.AUTOGO) { // 開いたらすぐ出陣（位置情報は許可ずみ・前に出陣したことがある）
+    await p.goto(base + '/turf.html', { waitUntil: 'domcontentloaded' }); await sleep(3500);
+    console.log('autogo', await p.evaluate(() => ({ walking: document.getElementById('btnGo').classList.contains('walking'), label: document.getElementById('goLabel').textContent })));
+    await p.screenshot({ path: path.join(OUT, 'sc_autogo.png') });
+  }
   await br.close(); srv.close();
 });
